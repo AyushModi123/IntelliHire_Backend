@@ -1,0 +1,15 @@
+fastapi==0.100.0
+Flask==2.3.2
+Flask_Cors==3.0.10
+Flask_JWT_Extended==4.5.2
+openai==0.27.7
+pydantic==1.10.8
+PyJWT==2.8.0
+pymongo==4.3.3
+PyPDF2==3.0.1
+pyppeteer==1.0.2
+Requests==2.31.0
+uvicorn==0.23.1
+waitress==2.1.2
+bcrypt==4.0.1
+python-dotenv==1.0.0
