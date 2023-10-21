@@ -14,3 +14,6 @@ waitress==2.1.2
 bcrypt==4.0.1
 python-dotenv==1.0.0
 python-multipart==0.0.6
+SQLAlchemy==2.0.22
+pymysql==1.1.0
+pydantic[email]

@@ -7,7 +7,8 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
 from fastapi import APIRouter
-from db import employer_records
+from db import db
+from models.users import UsersModel
 import bcrypt
 from fastapi.responses import JSONResponse
 
@@ -37,19 +38,21 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    return email
+    user = db.query(UsersModel).filter_by(email=email).first()
+    if not user:
+        raise HTTPException(status_code=403, detail="You do not have permission to access this job")    
+    return user
 
 @router.post("/token")
 async def auth(user_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     email = user_data.username
-    password = user_data.password
-    
-    email_found = employer_records.find_one({"email": email})
-    if email_found :
-        r_id = str(email_found['_id'])
-        email_val = email_found['email']
-        password_val = email_found['password']
-        if bcrypt.checkpw(password.encode('utf-8'), password_val):
+    password = user_data.password    
+    user = db.query(UsersModel).filter_by(email=email).first()
+    if user:        
+        email_val = user.email
+        password_val = user.password
+        role = user.role
+        if bcrypt.checkpw(password.encode('utf-8'), password_val.encode('utf-8')):
             access_token = create_access_token({"sub": email})
-            return JSONResponse(content={'access_token': access_token, 'r_id': r_id}, status_code=200)    
+            return JSONResponse(content={'access_token': access_token, 'role': role}, status_code=200)    
     raise HTTPException(status_code=401, detail="Email or Password do not match.")

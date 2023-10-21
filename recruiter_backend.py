@@ -3,6 +3,8 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from db import engine
+from models import Base
 from resources import DashboardRouter, JobRouter, UserRouter
 from auth import router as auth_router
 
@@ -18,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Base.metadata.create_all(bind=engine)
 
 app.include_router(UserRouter)
 app.include_router(DashboardRouter)

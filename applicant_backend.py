@@ -1,3 +1,5 @@
 from fastapi import APIRouter
 
-router = APIRouter(name="Applicants")
+router = APIRouter(prefix="/applicant", name="Applicants")
+
+

@@ -1,20 +1,48 @@
-from pydantic import BaseModel,  constr, ValidationError, validator
-from typing import List, Dict
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
+from sqlalchemy.types import Enum, UUID
+from sqlalchemy.orm import relationship
+from . import Base
 
-class UserSignup(BaseModel):
-    fullname: constr(min_length=3, max_length=50)
-    email: constr(min_length=3, regex=r"^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$")
-    employer: constr(min_length=1, max_length=50)
-    password1: constr(min_length=8, strict=True)
-    password2: constr(min_length=8, strict=True)
+class UsersModel(Base):
+    __tablename__ = 'users'
 
-    @validator('password2')
-    def passwords_match(cls, value, values, **kwargs):
-        if 'password1' in values and value != values['password1']:
-            raise ValueError('Passwords do not match')
-        return value
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255))
+    email = Column(String(255), unique=True)    
+    mob_no = Column(String(25))
+    password = Column(String(255))
+    role = Column(Enum('employer', 'applicant'))
+    
+    # applicant = relationship("ApplicantsModel", backref="users")
+    # employer = relationship("EmployersModel", backref="users")
+    # job = relationship("JobsModel", back_populates="users")
+
+class ApplicantsModel(Base):
+    __tablename__ = 'applicants'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    job_id = Column(String(36), ForeignKey('jobs.id'))    
+
+class EmployersModel(Base):
+    __tablename__ = 'employers'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_name = Column(String(255))    
+    user_id = Column(Integer, ForeignKey('users.id'))
 
 
-class UserLogin(BaseModel):
-    email: constr(min_length=3, regex=r"^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$")
-    password: constr(min_length=8, strict=True)
+class ReportModel(Base):
+    __tablename__ = 'reports'   
+
+    id = Column(Integer, primary_key=True, autoincrement=True)    
+    score = Column(Float)
+    status = Column(Enum('pending', 'interview', 'rejected'), default='pending')
+    achievements = Column(Integer)
+    coding_profiles = Column(Integer) 
+    education = Column(Integer)
+    experience = Column(Integer)
+    projects = Column(Integer)
+    skills = Column(Integer)
+    job_id = Column(String(36), ForeignKey('jobs.id'))
+    user_id = Column(Integer, ForeignKey('applicants.id'))

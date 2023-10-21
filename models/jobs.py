@@ -1,17 +1,27 @@
-from pydantic import BaseModel,  constr, ValidationError, validator
-from typing import List, Dict
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, ARRAY
+from sqlalchemy.orm import relationship
+from sqlalchemy.types import Enum, UUID
+import uuid
+from . import Base
 
-class JobDetails(BaseModel):
-    jd: constr(min_length=10)
-    weights: List[float]
-    job_title: constr(min_length=2)
-    status: constr(min_length=1)
-
-    @validator('weights')
-    def validate_my_list(cls, value):
-        if not all((isinstance(item, float) and item<=1 and item>=0) for item in value):
-            raise ValueError('All elements in the list must be floating-point')
-        if len(value) != 7:
-            raise ValueError('Weights array size should be 7')            
-        
-        return value
+class JobsModel(Base):
+    __tablename__ = 'jobs'
+    
+    id = Column(String(36), default=str(uuid.uuid4()), nullable=False, primary_key=True)
+    description = Column(String(2000))
+    weights = Column(String(1000))    
+    title = Column(String(255))
+    status = Column(Enum('active', 'inactive'), default='active')
+    user_id = Column(Integer, ForeignKey('users.id'))
+    # job = relationship("UsersModel", back_populates="jobs")
+    # employer = relationship("ApplicantsModel", backref="jobs")
+    
+    def as_dict(cls, job):
+        return {
+            "id": job.id,
+            "description": job.description,
+            "weights": job.weights,
+            "title": job.title,
+            "status": job.status,
+            "user_id": job.user_id
+        }
