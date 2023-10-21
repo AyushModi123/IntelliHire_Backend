@@ -6,8 +6,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse, Response
-from user_model import UserLogin, UserSignup, JobDetails
-from user_schema import user_insert_serializer
+from models import UserLogin, UserSignup, JobDetails
 from pymongo import MongoClient
 import bcrypt
 from bson import ObjectId
@@ -82,7 +81,7 @@ async def signup(user_data: UserSignup):
         raise HTTPException(status_code=400, detail="This email already exists in the database")
     else:
         hashed = bcrypt.hashpw(password2.encode('utf-8'), bcrypt.gensalt())
-        user_input = user_insert_serializer(user=user, employer=employer, email=email, hashed_password=hashed)
+        user_input = {'name': user, 'employer': employer, 'email': email, 'password': hashed}
         r_id = str(employer_records.insert_one(user_input).inserted_id)
         access_token = create_access_token({"sub": email})
         return JSONResponse(content={'access_token': access_token, 'r_id': r_id}, status_code=201)
@@ -99,7 +98,7 @@ async def login(user_data: UserLogin):
         password_val = email_found['password']
         if bcrypt.checkpw(password.encode('utf-8'), password_val):
             access_token = create_access_token({"sub": email})
-            return JSONResponse(content={'access_token': access_token, 'r_id': r_id}, status_code=201)    
+            return JSONResponse(content={'access_token': access_token, 'r_id': r_id}, status_code=200)    
     raise HTTPException(status_code=401, detail="Email or Password do not match.")
 
 @app.post('/dashboard/{r_id}')

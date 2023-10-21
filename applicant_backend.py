@@ -4,8 +4,8 @@ from bson import ObjectId
 import json
 from pymongo import MongoClient
 import asyncio
-from scraper_cp import scrape, data_cleaning
-from gen_grade import data_extraction
+from utils import scrape, data_cleaning
+from utils import data_extraction
 import threading
 import multiprocessing
 import os
