@@ -209,7 +209,7 @@ class data_cleaning:
         return coding_grade
 
 async def main():
-    codingData = await scrape(['https://auth.geeksforgeeks.org/user/aniketmishra2709/','https://codeforces.com/profile/aniketmishra2709','https://www.codechef.com/users/aniket_1245','https://leetcode.com/aniketmishra2709/'])
+    codingData = await scrape()
     if len(codingData) > 0:
         cleaned_data = data_cleaning().clean_data(codingData)
         print(cleaned_data)
