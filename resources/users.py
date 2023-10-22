@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from schemas import ApplicantSignupSchema, EmployerSignupSchema, UserLoginSchema
+from schemas import SignupSchema, UserLoginSchema
 from db import db
 from fastapi import HTTPException, Depends, UploadFile
 import bcrypt
@@ -13,7 +13,7 @@ from typing import Union
 router = APIRouter(tags=["Users/Resume"])
 
 @router.post("/signup")
-async def signup(user_data:  Union[ApplicantSignupSchema, EmployerSignupSchema]):
+async def signup(user_data: SignupSchema):
     data = user_data.dict()
     role = data.get("role")
     email = data.get("email")    

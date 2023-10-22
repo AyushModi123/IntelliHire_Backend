@@ -1,31 +1,16 @@
 from fastapi import HTTPException
 from pydantic import BaseModel,  constr, ValidationError, validator, EmailStr
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
-class EmployerSignupSchema(BaseModel):
+class SignupSchema(BaseModel):
     name: constr(min_length=3, max_length=50)
     email: EmailStr  
     mob_no: constr(min_length=10, max_length=13)
     password1: constr(min_length=8, strict=True)
     password2: constr(min_length=8, strict=True)
-    company_name: str
-    role: constr(regex="^(employer)$")
-
-    @validator('password2')
-    def passwords_match(cls, value, values, **kwargs):
-        if 'password1' in values and value != values['password1']:
-            raise HTTPException(status_code=400, detail='Passwords do not match')
-        return value
-
-class ApplicantSignupSchema(BaseModel):
-    name: constr(min_length=3, max_length=50)
-    email: EmailStr  
-    mob_no: constr(min_length=10, max_length=13)
-    password1: constr(min_length=8, strict=True)
-    password2: constr(min_length=8, strict=True)
-    job_id: str
-    role: constr(regex="^(applicant)$")
+    company_name: Optional[str]
+    role: constr(regex="^(employer|applicant)$")
 
     @validator('password2')
     def passwords_match(cls, value, values, **kwargs):
