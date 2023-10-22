@@ -1,13 +1,16 @@
 from fastapi import APIRouter
 from schemas import ApplicantSignupSchema, EmployerSignupSchema, UserLoginSchema
 from db import db
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, UploadFile
 import bcrypt
-from models.users import UsersModel, ApplicantsModel, EmployersModel
-from auth import create_access_token
+from models.users import UsersModel, ApplicantsModel, EmployersModel, UserDetailsModel, SkillsModel, ExperienceModel, EducationModel
+from utils import ResumeParser, exec_prompt
+import io
+from auth import create_access_token, get_current_user
 from fastapi.responses import JSONResponse, Response
 from typing import Union
-router = APIRouter(tags=["Users"])
+
+router = APIRouter(tags=["Users/Resume"])
 
 @router.post("/signup")
 async def signup(user_data:  Union[ApplicantSignupSchema, EmployerSignupSchema]):
@@ -68,3 +71,54 @@ async def login(user_data: UserLoginSchema):
             access_token = create_access_token({"sub": email_val})
             return JSONResponse(content={'access_token': access_token, 'role': role}, status_code=200)    
     raise HTTPException(status_code=401, detail="Email or Password do not match.")
+
+@router.post("/upload_resume")
+async def upload_resume(file: UploadFile, current_user: str = Depends(get_current_user)):
+    current_user_id = current_user.id
+    if file.content_type != "application/pdf":
+        return HTTPException(status_code=400, detail="Only PDF files are allowed.")
+    file_bytes = await file.read()
+    de_obj = ResumeParser(io.BytesIO(file_bytes))
+    linkedin_link, github_link, leetcode_link, codechef_link, codeforces_link = de_obj.get_profile_links()
+    doc = de_obj.parse_resume()    
+    cand_details = doc.details
+    user_details = UserDetailsModel(
+        user_id=current_user_id,
+        name = cand_details.name,
+        email = cand_details.email,
+        contact = cand_details.contact,
+        location = cand_details.location,
+        linkedin_link = linkedin_link,
+        github_link = github_link,
+        leetcode_link = leetcode_link,
+        codechef_link = codechef_link,
+        codeforces_link = codeforces_link
+        )
+    db.add(user_details)
+    for ed in doc.education:
+        education = EducationModel(
+            user_id=current_user_id,
+            name=ed.name,
+            stream=ed.stream,
+            score=ed.score,
+            location=ed.location,
+            graduation_year=ed.graduation_year
+        )
+        db.add(education)
+    for exp in doc.experience:
+        experience = ExperienceModel(
+            user_id = current_user_id,
+            company_name=exp.company_name,
+            role=exp.role,
+            role_desc=exp.role_desc,
+            start_date=exp.start_date,
+            end_date=exp.end_date
+        )
+        db.add(experience)
+    skills = SkillsModel(
+        user_id=current_user_id,
+        skills=doc.skills
+        )
+    db.add(skills)
+    db.commit()
+    return JSONResponse(content={'message': "PDF file uploaded and parsed successfully."}, status_code=201)

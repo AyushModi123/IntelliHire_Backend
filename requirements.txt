@@ -17,3 +17,4 @@ python-multipart==0.0.6
 SQLAlchemy==2.0.22
 pymysql==1.1.0
 pydantic[email]
+langchain==0.0.281
