@@ -1,55 +1,41 @@
 from fastapi import APIRouter
 from fastapi import HTTPException, Depends
-from db import employer_records
-from fastapi import HTTPException
 from bson import ObjectId
-from models import JobDetails
+from schemas import JobDetailsSchema
 from auth import get_current_user
 from fastapi.responses import JSONResponse, Response
-from db import employer_records, applicant_records, jd_records
+from db import db
+from models.jobs import JobsModel
+from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportModel
 router = APIRouter(prefix="/job", tags=["Jobs"])
 
-@router.get('/{j_id}')
-async def get_job(j_id: str, current_user: str = Depends(get_current_user)):
-    try:        
-        job_details = jd_records.find_one({"_id": ObjectId(j_id)}, {'_id':0, "r_id": 1, "jd": 1, "weights": 1, "job_title": 1, "status": 1 })		
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Invalid Job id")    
-    if job_details is None:
-        raise HTTPException(status_code=404, detail="Job id Not Found") 
-    rec_details = employer_records.find_one({"_id": ObjectId(job_details["r_id"])})
-    if current_user != rec_details["email"]:
-        raise HTTPException(status_code=403, detail="You do not have permission to access this job")
-    applicant_details = []
-    for x in applicant_records.find({"j_id": j_id}, {'j_id':0, '_id':0}):        
-        applicant_details.append(x)    
-    job_details['candidates'] = applicant_details
-    return JSONResponse(content={'data':job_details}, status_code=200)
+@router.get('/{job_id}')
+async def get_job(job_id: str, current_user: str = Depends(get_current_user)):            
+    job = db.query(JobsModel).filter_by(id=job_id).first()
+    if not job:            
+        raise HTTPException(status_code=404, detail="Invalid Job ID") 
+    job_applicants = []
+    for applicant in db.query(ApplicantsModel).filter_by(job_id=job.id).all():
+        job_applicants.append(applicant)    
+    job = job.as_dict(job)
+    job['applicants'] = job_applicants    
+    return JSONResponse(content={'data':job}, status_code=200)
 
-@router.delete('/{j_id}')
-async def delete_job(j_id: str, current_user: str = Depends(get_current_user)):
-	try:        
-		job_details = jd_records.find_one({"_id": ObjectId(j_id)}, {})		
-	except Exception as e:
-		raise HTTPException(status_code=404, detail="Invalid Job id")    
-	if job_details:
-		rec_details = employer_records.find_one({"_id": ObjectId(job_details["r_id"])})
-		if current_user != rec_details["email"]:    	
-			raise HTTPException(status_code=403, detail="You do not have permission to access this job")
-		jd_records.delete_one({"_id": ObjectId(j_id)})		
-	return Response(status_code=204)
+@router.delete('/{job_id}')
+async def delete_job(job_id: str, current_user: str = Depends(get_current_user)):
+    job = db.query(JobsModel).filter_by(id=job_id).first()    
+    if not job:
+        raise HTTPException(status_code=404, detail="Invalid Job ID")                
+    db.delete(job)
+    db.commit()
+    return Response(status_code=204)
 
-@router.put('/{j_id}')
-async def update_job(j_id: str, job_data: JobDetails, current_user: str = Depends(get_current_user)):
+@router.put('/{job_id}')
+async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str = Depends(get_current_user)):
     job_data = job_data.dict()
-    try:
-        job_details = jd_records.find_one({"_id": ObjectId(j_id)})		
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Invalid Job id")                 
-    if not job_details:
-        raise HTTPException(status_code=404, detail="Job not found")
-    rec_details = employer_records.find_one({"_id": ObjectId(job_details["r_id"])})
-    if current_user != rec_details["email"]: 	
-        raise HTTPException(status_code=403, detail="You do not have permission to access this job")			
-    jd_records.update_one({"_id": ObjectId(j_id)}, {"$set": job_data})		
+    job = db.query(JobsModel).filter_by(id=job_id)
+    if not job.first():            
+        raise HTTPException(status_code=404, detail="Invalid Job ID")         
+    job.update(job_data)
+    db.commit()
     return Response(status_code=204)
