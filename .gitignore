@@ -7,3 +7,4 @@ __pycache__
 Others
 keys.py
 app_.py
+gunicorn_config.py
