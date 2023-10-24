@@ -19,5 +19,5 @@ pymysql==1.1.0
 pydantic[email]
 langchain==0.0.281
 waitress==2.1.2
-gunicorn==21.2.0 ; platform_system == 'Linux'
-fcntl ; platform_system == 'Linux'
+selenium==4.14.0
+bs4==0.0.1
