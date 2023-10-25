@@ -21,11 +21,12 @@ async def signup(user_data: SignupSchema):
     if user:
         raise HTTPException(status_code=400, detail="This email already exists in the database")
     else:
+        name = data.get("name")
         if role == "employer":
             password = data.get("password1")            
             hashed_pass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())            
             user_model = UsersModel(
-                name=data.get("name"),
+                name=name,
                 email=email,
                 mob_no=data.get("mob_no"),                               
                 password=hashed_pass,
@@ -42,7 +43,7 @@ async def signup(user_data: SignupSchema):
             password = data.get("password1")            
             hashed_pass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())            
             user_model = UsersModel(
-                name=data.get("name"),
+                name=name,
                 email=email,
                 mob_no=data.get("mob_no"),                               
                 password=hashed_pass,
@@ -56,7 +57,7 @@ async def signup(user_data: SignupSchema):
             db.add(applicant_model)
             db.commit()                         
         access_token = create_access_token({"sub": email})
-        return JSONResponse(content={'access_token': access_token, 'role': role}, status_code=201)
+        return JSONResponse(content={'access_token': access_token, 'name': name, 'role': role}, status_code=201)
 
 @router.post("/login")
 async def login(user_data: UserLoginSchema):
@@ -66,10 +67,11 @@ async def login(user_data: UserLoginSchema):
     if user:        
         email_val = user.email
         password_val = user.password
-        role = user.role        
+        role = user.role  
+        name = user.name
         if bcrypt.checkpw(password.encode('utf-8'), password_val.encode('utf-8')):
             access_token = create_access_token({"sub": email_val})
-            return JSONResponse(content={'access_token': access_token, 'role': role}, status_code=200)    
+            return JSONResponse(content={'access_token': access_token, 'name': name, 'role': role}, status_code=200)    
     raise HTTPException(status_code=401, detail="Email or Password do not match.")
 
 @router.post("/upload_resume")
