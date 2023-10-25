@@ -6,13 +6,13 @@ import re
 import requests
 
 
-async def scrape(links=(None, None, None, None)):
+def scrape(links=(None, None, None, None)):
     gfg, cf, cc, lc = links
     codingData = []
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')  
-
+    driver = webdriver.Chrome(options=chrome_options)
     if lc:
         try:
             username = lc.split("/")[-2]
@@ -41,7 +41,7 @@ async def scrape(links=(None, None, None, None)):
             response = requests.post(url, json=payload, headers=headers)
             data = response.json()["data"]
             lc_data = {
-                "platform": "lc",
+                "platform": "leetcode",
                 "rating": data["userContestRanking"]["rating"],
                 "topPercentage": data["userContestRanking"]["topPercentage"],
             }
@@ -57,8 +57,7 @@ async def scrape(links=(None, None, None, None)):
             codingData.append(lc_data)
         except Exception as e:
             print("Couldn't fetch data: ", e)
-    if gfg:
-        driver = webdriver.Chrome(options=chrome_options)
+    if gfg:        
         try:
             driver.get(gfg)
             page_source = driver.page_source
@@ -80,18 +79,15 @@ async def scrape(links=(None, None, None, None)):
                         break
 
             gfg_data = {
-                "platform": "gfg",
+                "platform": "geeksforgeeks",
                 "problems_solved": problems_solved,
                 **level_data,
             }
             codingData.append(gfg_data)
         except Exception as e:
             print("Couldn't fetch data: ", e)
-        finally:
-            driver.quit()
 
-    if cf:
-        driver = webdriver.Chrome(options=chrome_options)
+    if cf:        
         try:
             driver.get(cf)
             page_source = driver.page_source
@@ -106,18 +102,15 @@ async def scrape(links=(None, None, None, None)):
             )
 
             cf_data = {
-                "platform": "cf",
+                "platform": "codeforces",
                 "rating": rating,
                 "problems_solved": problems_solved,
             }
             codingData.append(cf_data)
         except Exception as e:
-            print("Couldn't fetch data: ", e)
-        finally:
-            driver.quit()
+            print("Couldn't fetch data: ", e)        
 
-    if cc:
-        driver = webdriver.Chrome(options=chrome_options)
+    if cc:        
         try:
             driver.get(cc)
             page_source = driver.page_source
@@ -134,7 +127,7 @@ async def scrape(links=(None, None, None, None)):
             )
 
             cc_data = {
-                "platform": "cc",
+                "platform": "codechef",
                 "max_rating": max_rating,
                 "rating": rating_cc,
                 "problems_solved": problems_cc,
@@ -142,8 +135,7 @@ async def scrape(links=(None, None, None, None)):
             codingData.append(cc_data)
         except Exception as e:
             print("Couldn't fetch data: ", e)
-        finally:
-            driver.quit()
+    driver.quit()
     return codingData
 
 
@@ -169,10 +161,10 @@ class data_cleaning:
 
     def clean_data(self, codingData):
         for data in codingData:
-            if data["platform"] == "cf":
+            if data["platform"] == "codeforces":
                 data["rating"], data["max_rating"] = self.extract_values(data["rating"])
                 data["problems_solved"] = self.extract_values(data["problems_solved"])
-            elif data["platform"] == "cc":
+            elif data["platform"] == "codechef":
                 data["max_rating"] = self.extract_values(data["max_rating"])
                 data["problems_solved"] = self.extract_values(data["problems_solved"])
                 # codingData[2]['stars'] = self.remove_special_symbols(codingData[2]['stars'])
@@ -208,11 +200,14 @@ class data_cleaning:
         )
         return coding_grade
 
-async def main():
-    codingData = await scrape()
+def main():
+    codingData = scrape()
     if len(codingData) > 0:
         cleaned_data = data_cleaning().clean_data(codingData)
         print(cleaned_data)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    import time
+    start = time.time()
+    main()
+    print(time.time() - start)

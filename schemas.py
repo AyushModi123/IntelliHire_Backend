@@ -10,6 +10,7 @@ class SignupSchema(BaseModel):
     password1: constr(min_length=8, strict=True)
     password2: constr(min_length=8, strict=True)
     company_name: Optional[str]
+    location: str
     role: constr(regex="^(employer|applicant)$")
 
     @validator('password2')

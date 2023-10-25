@@ -10,6 +10,7 @@ class UsersModel(Base):
     name = Column(String(255))
     email = Column(String(255), unique=True)    
     mob_no = Column(String(25))
+    location = Column(String(255))
     password = Column(String(255))
     role = Column(Enum('employer', 'applicant'))
     
@@ -47,15 +48,11 @@ class ReportModel(Base):
     job_id = Column(String(36), ForeignKey('jobs.id'))
     user_id = Column(Integer, ForeignKey('applicants.id'))
 
-class UserDetailsModel(Base):
-    __tablename__ = 'user_details'
+class LinksModel(Base):
+    __tablename__ = 'links'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    name = Column(String(255))
-    email = Column(String(255))
-    contact = Column(String(255))
-    location = Column(String(255))
+    user_id = Column(Integer, ForeignKey("users.id"))        
     linkedin_link = Column(String(255))
     github_link = Column(String(255))
     leetcode_link = Column(String(255))
@@ -63,11 +60,7 @@ class UserDetailsModel(Base):
     codeforces_link = Column(String(255))
 
     def to_dict(self):
-        return {
-            "name": self.name,
-            "email": self.email,
-            "contact": self.contact,
-            "location": self.location,
+        return {            
             "github_link": self.github_link,
             "linkedin_link": self.linkedin_link,
             "leetcode_link": self.leetcode_link,
@@ -121,6 +114,23 @@ class SkillsModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     skills = Column(String(1024))
+    coding_skills = Column(String(500))
+
+    '''{'platform': 'leetcode',
+        'rating': ,
+        'problems_solved': 
+        }
+
+        {'platform': 'geeksforgeeks', 
+        'problems_solved': }
+
+        {'platform': 'codeforces',
+        'problems_solved':,
+        'max_rating': }
+
+        {'platform': 'codechef',
+        'max_rating': ,
+        'problems_solved':}'''
 
     def to_dict(self):
         return {
