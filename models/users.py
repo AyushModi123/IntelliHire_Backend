@@ -33,7 +33,7 @@ class EmployersModel(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
 
 
-class ReportModel(Base):
+class ReportsModel(Base):
     __tablename__ = 'reports'   
 
     id = Column(Integer, primary_key=True, autoincrement=True)    

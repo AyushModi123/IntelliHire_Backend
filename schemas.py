@@ -25,7 +25,7 @@ class UserLoginSchema(BaseModel):
 
 class JobDetailsSchema(BaseModel):
     description: constr(min_length=10)
-    weights: List[float]
+    weights: List[str]
     title: constr(min_length=2)
     status: constr(regex="^(active|inactive)$")
 
