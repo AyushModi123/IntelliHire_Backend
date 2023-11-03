@@ -25,6 +25,13 @@ class ApplicantsModel(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     job_id = Column(String(36), ForeignKey('jobs.id'))    
 
+    def as_dict(cls):
+        return {
+            "id": cls.id,
+            "user_id": cls.user_id,
+            "job_id": cls.job_id,
+        }
+
 class EmployersModel(Base):
     __tablename__ = 'employers'
 

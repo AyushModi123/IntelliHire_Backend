@@ -8,15 +8,15 @@ class SignupSchema(BaseModel):
     email: EmailStr  
     mob_no: constr(min_length=10, max_length=13)
     password1: constr(min_length=8, strict=True)
-    password2: constr(min_length=8, strict=True)
+    password2: constr()
     company_name: Optional[str]
-    location: str
+    location: constr(min_length=1)
     role: constr(regex="^(employer|applicant)$")
 
     @validator('password2')
     def passwords_match(cls, value, values, **kwargs):
         if 'password1' in values and value != values['password1']:
-            raise HTTPException(status_code=400, detail='Passwords do not match')
+            raise HTTPException(status_code=422, detail='Passwords do not match')
         return value
 
 class UserLoginSchema(BaseModel):

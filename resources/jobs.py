@@ -22,7 +22,9 @@ async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_c
         )
         db.add(job_model)
         db.commit()    
-        return JSONResponse(content={'j_id':job_model.id}, status_code=201)		
+        job = db.query(JobsModel).filter_by(id=job_model.id).first()
+        job = job.as_dict()
+        return JSONResponse(content={"job": job}, status_code=201)		
     return Response(status_code=403)
 
 @router.get('/jobs')
@@ -48,11 +50,17 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user)):
         if not job:            
             raise HTTPException(status_code=404, detail="Invalid Job ID")
         job_applicants = []
-        # To be implemented 
-        # for applicant in db.query(ApplicantsModel).filter_by(job_id=job.id).all():
-        #     applicant.user_id
-            # job_applicants.append(applicant)   
-        job = job.as_dict(job)
+        # To be implemented
+        rank_counter = 1
+        for applicant in db.query(ApplicantsModel).filter_by(job_id=job.id).all():            
+            user_details = db.query(UsersModel).filter_by(id=applicant.user_id).first()
+            applicant = applicant.as_dict()
+            applicant["rank"] = rank_counter
+            applicant["name"] = user_details.name
+            applicant["email"] = user_details.email
+            rank_counter+=1
+            job_applicants.append(applicant)
+        job = job.as_dict()
         job['applicants'] = job_applicants   
         del job["user_id"]
         return JSONResponse(content={'data':job}, status_code=200)

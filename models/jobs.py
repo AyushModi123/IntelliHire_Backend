@@ -16,12 +16,12 @@ class JobsModel(Base):
     # job = relationship("UsersModel", back_populates="jobs")
     # employer = relationship("ApplicantsModel", backref="jobs")
     
-    def as_dict(cls, job):
+    def as_dict(cls):
         return {
-            "id": job.id,
-            "description": job.description,
-            "weights": job.weights,
-            "title": job.title,
-            "status": job.status,
-            "user_id": job.user_id
+            "id": cls.id,
+            "description": cls.description,
+            "weights": cls.weights,
+            "title": cls.title,
+            "status": cls.status,
+            "user_id": cls.user_id
         }
