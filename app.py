@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from db import engine
 from models import Base
-from resources import JobRouter, UserRouter
+from resources import JobRouter, UserRouter, PromptRouter
 from auth import router as AuthRouter
 
 app = FastAPI()
@@ -26,6 +26,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(UserRouter)
 app.include_router(JobRouter)
 app.include_router(AuthRouter)
+app.include_router(PromptRouter)
 
 if __name__ == '__main__':
     uvicorn.run('app:app', host='0.0.0.0', port=5001, reload=True)

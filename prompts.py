@@ -41,3 +41,13 @@ parse_resume_prompt = PromptTemplate(
     template='''You are a world class algorithm for extracting information in structured formats. Use the given format to extract information from the following input: {resume_text}. 
           Tip: Make sure to answer in the correct format. Return value of fields as None if value not found.'''
 )
+
+job_description_prompt = PromptTemplate(
+    input_variables=["job_title", "industry", "tone"],
+    template='''Generate a comprehensive job description for a {job_title} in the {industry} industry. The tone should be {tone}, 
+        and the description should include key responsibilities, qualifications, and any specific attributes or skills desired. Ensure that the language is engaging and tailored to attract suitable candidates.'''
+)
+
+class JobDescriptionPromptsSchema(BaseModel):
+    """Generate Job Description"""
+    content: str = Field(..., description="Job Description")

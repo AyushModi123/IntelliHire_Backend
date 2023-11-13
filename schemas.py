@@ -36,3 +36,8 @@ class JobDetailsSchema(BaseModel):
         if len(value) != 7:
             raise HTTPException(status_code=400, detail='Weights array size should be 7')
         return value
+    
+class JobDescriptionSchema(BaseModel):
+    job_title: constr(min_length=1) 
+    industry: constr(min_length=1)
+    tone: constr(min_length=1)

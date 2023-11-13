@@ -36,7 +36,8 @@ class EmployersModel(Base):
     __tablename__ = 'employers'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    company_name = Column(String(255))    
+    company_name = Column(String(255))
+    is_premium = Column(Boolean, default=False)   
     user_id = Column(Integer, ForeignKey('users.id'))
 
 
