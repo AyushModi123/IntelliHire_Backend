@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, func, DateTime
 from sqlalchemy.types import Enum, UUID
 from sqlalchemy.orm import relationship
 from . import Base
@@ -13,9 +13,10 @@ class UsersModel(Base):
     location = Column(String(255))
     password = Column(String(255))
     role = Column(Enum('employer', 'applicant'))
+    created_at = Column(DateTime, default=func.now())
     
     # applicant = relationship("ApplicantsModel", backref="users")
-    # employer = relationship("EmployersModel", backref="users")
+    employer = relationship("EmployersModel", backref="users")
     # job = relationship("JobsModel", back_populates="users")
 
 class ApplicantsModel(Base):

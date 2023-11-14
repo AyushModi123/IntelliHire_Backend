@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade():
-    op.add_column('employers', sa.Column('is_premium', sa.Boolean(), server_default='false', nullable=True))
+    op.add_column('employers', sa.Column('is_premium', sa.Boolean(), server_default=sa.false(), nullable=True))
 
 def downgrade():
     op.drop_column('employers', 'is_premium')

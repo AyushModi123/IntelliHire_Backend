@@ -43,8 +43,8 @@ parse_resume_prompt = PromptTemplate(
 )
 
 job_description_prompt = PromptTemplate(
-    input_variables=["job_title", "industry", "tone"],
-    template='''Generate a comprehensive job description for a {job_title} in the {industry} industry. The tone should be {tone}, 
+    input_variables=["job_title", "industry", "tone", "company_name"],
+    template='''Generate a comprehensive job description for a {job_title} in the {industry} industry at company {company_name}. The tone should be {tone}, 
         and the description should include key responsibilities, qualifications, and any specific attributes or skills desired. Ensure that the language is engaging and tailored to attract suitable candidates.'''
 )
 

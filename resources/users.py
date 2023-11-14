@@ -35,9 +35,11 @@ async def signup(user_data: SignupSchema):
                 location=location
             )
             db.add(user_model)
+            db.commit()                  
             employer_model= EmployersModel(
                 company_name=data.get("company_name"), 
-                user_id=user_model.id
+                user_id=user_model.id,
+                is_premium=data.get("is_premium")
             )
             db.add(employer_model)
             db.commit()             
