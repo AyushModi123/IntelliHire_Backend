@@ -1,6 +1,6 @@
 from langchain import PromptTemplate
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from pydantic import BaseModel, Field
 
 class CandidateDetailsSchema(BaseModel):
@@ -43,11 +43,31 @@ parse_resume_prompt = PromptTemplate(
 )
 
 job_description_prompt = PromptTemplate(
-    input_variables=["job_title", "industry", "tone", "company_name"],
-    template='''Generate a comprehensive job description for a {job_title} in the {industry} industry at company {company_name}. The tone should be {tone}, 
+    input_variables=["job_title", "domain", "tone", "company_name"],
+    template='''Generate a comprehensive job description for a {job_title} in the {domain} domain at company {company_name}. The tone should be {tone}, 
         and the description should include key responsibilities, qualifications, and any specific attributes or skills desired. Ensure that the language is engaging and tailored to attract suitable candidates.'''
 )
 
 class JobDescriptionPromptsSchema(BaseModel):
     """Generate Job Description"""
     content: str = Field(..., description="Job Description")
+
+job_fit_prompt = PromptTemplate(
+    input_variables=["job_description"],
+    template='''Based on the given job_description: {job_description}.
+    Generate 3 very short Multiple Choice Basic Job Fit questions to ask candidates to check their eligibility with their corresponding correct answers as options.
+    Be specific with the questions and their options. Frame questions as if they are being asked to candidates.'''
+)
+
+class JobFitOptionsPromptsSchema(BaseModel):
+    id: int = Field(..., description="Option number")
+    option: str = Field(..., description="Option Text")
+    answer: bool = Field(..., description="Correct/Incorrect")
+
+class JobFitQuestionPromptsSchema(BaseModel):
+    question: str = Field(..., description="Question")
+    quiz_question_options: List[JobFitOptionsPromptsSchema]
+
+class JobFitQuestionsPromptsSchema(BaseModel):
+    """Generate Job Fit Questions"""
+    quiz_questions: List[JobFitQuestionPromptsSchema]

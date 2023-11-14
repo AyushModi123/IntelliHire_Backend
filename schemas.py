@@ -40,5 +40,8 @@ class JobDetailsSchema(BaseModel):
     
 class JobDescriptionSchema(BaseModel):
     job_title: constr(min_length=1) 
-    industry: constr(min_length=1)
+    domain: constr(min_length=1)
     tone: constr(min_length=1)
+
+class JobFitSchema(BaseModel):
+    job_description: constr(min_length=1)
