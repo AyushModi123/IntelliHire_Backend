@@ -40,6 +40,7 @@ class EmployersModel(Base):
     company_name = Column(String(255))
     is_premium = Column(Boolean, default=False)   
     user_id = Column(Integer, ForeignKey('users.id'))
+    company_desc = Column(String(1000))
 
 
 class ReportsModel(Base):
