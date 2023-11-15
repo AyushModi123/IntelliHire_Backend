@@ -19,6 +19,15 @@ class UsersModel(Base):
     employer = relationship("EmployersModel", backref="users")
     # job = relationship("JobsModel", back_populates="users")
 
+    @classmethod
+    def as_dict(cls):        
+        return {
+            "name": cls.name,
+            "email": cls.email,
+            "mob_no": cls.mob_no,
+            "location": cls.location            
+        }
+
 class ApplicantsModel(Base):
     __tablename__ = 'applicants'
     
@@ -41,6 +50,13 @@ class EmployersModel(Base):
     is_premium = Column(Boolean, default=False)   
     user_id = Column(Integer, ForeignKey('users.id'))
     company_desc = Column(String(1000))
+
+    def as_dict(cls):
+        return {            
+            "company_name": cls.company_name,
+            "is_premium": cls.is_premium,
+            "company_desc": cls.company_desc
+        }
 
 
 class ReportsModel(Base):
