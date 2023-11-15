@@ -26,6 +26,6 @@ async def job_description(data: JobDescriptionSchema, current_user: str = Depend
 
 @router.post("/job-fit")
 async def job_fit(data: JobFitSchema, current_user: str = Depends(is_premium)):
-    job_fit_questions = exec_prompt(output_schema=JobFitQuestionsPromptsSchema, parse_prompt=job_fit_prompt, input_data={"job_description": data.job_description})    
+    job_fit_questions = exec_prompt(output_schema=JobFitQuestionsPromptsSchema, parse_prompt=job_fit_prompt, input_data={"job_description": data.job_description, "company_desc": current_user.company_desc, "exclude_ques": data.exclude_ques})
     job_fit_questions = job_fit_questions.json()
     return JSONResponse(content={"data": job_fit_questions})

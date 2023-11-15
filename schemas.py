@@ -12,8 +12,8 @@ class SignupSchema(BaseModel):
     company_name: Optional[str]
     location: constr(min_length=1)
     role: constr(regex="^(employer|applicant)$")
-    is_premium: bool
-    company_desc: constr(min_length=1)
+    is_premium: Optional[bool]
+    company_desc: Optional[str]
 
     @validator('password2')
     def passwords_match(cls, value, values, **kwargs):
@@ -46,3 +46,4 @@ class JobDescriptionSchema(BaseModel):
 
 class JobFitSchema(BaseModel):
     job_description: constr(min_length=1)
+    exclude_ques: Optional[List[str]]

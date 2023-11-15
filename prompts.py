@@ -53,10 +53,12 @@ class JobDescriptionPromptsSchema(BaseModel):
     content: str = Field(..., description="Job Description")
 
 job_fit_prompt = PromptTemplate(
-    input_variables=["job_description"],
-    template='''Based on the given job_description: {job_description}.
-    Generate 3 very short Multiple Choice Basic Job Fit questions to ask candidates to check their eligibility with their corresponding correct answers as options.
-    Be specific with the questions and their options. Frame questions as if they are being asked to candidates.'''
+    input_variables=["job_description", "company_desc", "exclude_ques"],
+    template='''Based on the given job_description: {job_description}
+    ; company_description: {company_desc}.
+    Generate 3 basic fit questions that an interviewer might ask candidates.
+    These questions should focus on assessing the candidate's qualifications, experience, and educational background. Include questions similar to 'How many years of experience do you have?' and 'Do you have a [specific degree]?' to help evaluate the candidate's fitness for the role.
+    Exclude these questions: {exclude_ques}'''
 )
 
 class JobFitOptionsPromptsSchema(BaseModel):
