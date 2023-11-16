@@ -25,19 +25,30 @@ class UserLoginSchema(BaseModel):
     email: EmailStr
     password: constr(min_length=8, strict=True)
 
-class JobDetailsSchema(BaseModel):
-    description: constr(min_length=10)
-    weights: List[str]
-    title: constr(min_length=2)
-    status: constr(regex="^(active|inactive)$")
+class JobFitOptionsSchema(BaseModel):
+    id: int 
+    option: str 
+    answer: bool 
 
-    @validator('weights')
-    def validate_my_list(cls, value):
-        if not all((isinstance(item, float) and item<=1 and item>=0) for item in value):
-            raise HTTPException(status_code=400, detail='All elements in the list must be floating-point')
-        if len(value) != 7:
-            raise HTTPException(status_code=400, detail='Weights array size should be 7')
-        return value
+class JobFitQuestionSchema(BaseModel):
+    question: str
+    quiz_question_options: List[JobFitOptionsSchema]
+    
+class JobDetailsSchema(BaseModel):
+    description: constr(min_length=50)
+    weights: str
+    title: constr(min_length=1)
+    status: constr(regex="^(active|inactive)$")
+    quiz_questions: List[JobFitQuestionSchema]
+    
+
+    # @validator('weights')
+    # def validate_my_list(cls, value):
+    #     if not all((isinstance(item, float) and item<=1 and item>=0) for item in value):
+    #         raise HTTPException(status_code=400, detail='All elements in the list must be floating-point')
+    #     if len(value) != 7:
+    #         raise HTTPException(status_code=400, detail='Weights array size should be 7')
+    #     return value
     
 class JobDescriptionSchema(BaseModel):
     job_title: constr(min_length=1) 

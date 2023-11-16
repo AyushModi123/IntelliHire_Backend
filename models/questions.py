@@ -10,8 +10,7 @@ class JobFitQuestionModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     question = Column(String(5000))
     choices = Column(String(5000))  #Separate choices by ';;;'
-    answer = Column(Integer) #Store correct choice's number
-    difficulty = Column(Enum('easy', 'medium', 'hard'))
+    answer = Column(Integer) #Store correct choice's number    
 
     job_id = Column(String(36), ForeignKey('jobs.id'))
 

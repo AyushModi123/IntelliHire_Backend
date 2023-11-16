@@ -7,21 +7,46 @@ from fastapi.responses import JSONResponse, Response
 from db import db
 from models.jobs import JobsModel
 from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel, ApplicantJobsModel
+from models.questions import JobFitQuestionModel, AptitudeQuestionModel
 router = APIRouter(tags=["Jobs/Create-Job"])
 
 @router.post('/create-job')
 async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_current_user)):    
     if current_user.role == "employer":
+        current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
         data = job_data.dict()
-        job_model = JobsModel(
-            description=data.get("description"),
-            weights=data.get("weights"),
-            title=data.get("title"),
-            status=data.get("status"),
-            user_id=current_user.id
-        )
-        db.add(job_model)
-        db.commit()    
+        try:
+            job_model = JobsModel(
+                description=data.get("description"),
+                weights=data.get("weights"),
+                title=data.get("title"),
+                status=data.get("status"),
+                employer_id=current_user.id
+            )
+            db.add(job_model)
+            db.flush()  
+            for question in data.get("quiz_questions"):
+                current_question = question.get("question")
+                options = question.get("quiz_question_options")
+                current_options = ""
+                answer_index = 0
+                for i, option in enumerate(options):
+                    current_options+=option.get("option")
+                    current_options+=";;;"
+                    if option.get("answer"):
+                        answer_index = i
+                question_model = JobFitQuestionModel(
+                            question=current_question,
+                            choices=current_options,
+                            answer=answer_index,
+                            job_id=job_model.id
+                        )
+                db.add(question_model)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(e)
+            raise HTTPException(status_code=500, detail=f"Internal Server Error")
         job = db.query(JobsModel).filter_by(id=job_model.id).first()
         job = job.as_dict()
         return JSONResponse(content={"job": job}, status_code=201)		
