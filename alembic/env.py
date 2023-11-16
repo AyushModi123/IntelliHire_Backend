@@ -19,6 +19,7 @@ if config.config_file_name is not None:
 from models import Base
 from models.jobs import JobsModel
 from models.users import ReportsModel, UsersModel, ApplicantsModel, EmployersModel, LinksModel, SkillsModel, ExperienceModel, EducationModel
+from models.questions import JobFitQuestionModel, AptitudeQuestionModel
 target_metadata = Base.metadata
 # target_metadata = None
 

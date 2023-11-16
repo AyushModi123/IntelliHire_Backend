@@ -6,7 +6,7 @@ from auth import get_current_user
 from fastapi.responses import JSONResponse, Response
 from db import db
 from models.jobs import JobsModel
-from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel
+from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel, ApplicantJobsModel
 router = APIRouter(tags=["Jobs/Create-Job"])
 
 @router.post('/create-job')
@@ -30,18 +30,21 @@ async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_c
 @router.get('/jobs')
 async def get_jobs(current_user: str = Depends(get_current_user)):    
     if current_user.role == "employer":
+        current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
         jds = []
-        for job in db.query(JobsModel).filter_by(user_id=current_user.id).all():
+        for job in db.query(JobsModel).filter_by(employer_id=current_user.id).all():
             jds.append({"id": job.id, "title": job.title, 'status': job.status})        
         return JSONResponse(content={'data':jds}, status_code=200)
     elif current_user.role == "applicant":
+        current_user = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         jds = []
-        applicant_jobs = db.query(ApplicantsModel).filter_by(user_id=current_user.id).all()
+        applicant_jobs = db.query(ApplicantJobsModel).filter_by(applicant_id=current_user.id).all()
         for applicant_job in applicant_jobs:
             job = db.query(JobsModel).filter_by(id=applicant_job.job_id).first()
-            report = db.query(ReportsModel).filter_by(user_id=current_user.id, job_id=job.id).first()
+            report = db.query(ReportsModel).filter_by(id=applicant_job.report_id).first()
             jds.append({"id": job.id, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})
-        return JSONResponse(content={'data':jds}, status_code=200)	
+        return JSONResponse(content={'data':jds}, status_code=200)
+    raise HTTPException(status_code=403)
 
 @router.get('/job/{job_id}')
 async def get_job(job_id: str, current_user: str = Depends(get_current_user)):       

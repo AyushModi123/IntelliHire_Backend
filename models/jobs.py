@@ -12,7 +12,7 @@ class JobsModel(Base):
     weights = Column(String(1000))    
     title = Column(String(255))
     status = Column(Enum('active', 'inactive'), default='active')
-    user_id = Column(Integer, ForeignKey('users.id'))
+    employer_id = Column(Integer, ForeignKey('employers.id'))
     # job = relationship("UsersModel", back_populates="jobs")
     # employer = relationship("ApplicantsModel", backref="jobs")
     
@@ -23,5 +23,5 @@ class JobsModel(Base):
             "weights": cls.weights,
             "title": cls.title,
             "status": cls.status,
-            "user_id": cls.user_id
+            "user_id": cls.employer_id
         }

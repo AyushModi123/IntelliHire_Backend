@@ -15,8 +15,8 @@ class UsersModel(Base):
     role = Column(Enum('employer', 'applicant'))
     created_at = Column(DateTime, default=func.now())
     
-    # applicant = relationship("ApplicantsModel", backref="users")
-    employer = relationship("EmployersModel", backref="users")
+    applicant = relationship("ApplicantsModel", backref="user")
+    employer = relationship("EmployersModel", backref="user")
     # job = relationship("JobsModel", back_populates="users")
 
     @classmethod
@@ -31,16 +31,22 @@ class UsersModel(Base):
 class ApplicantsModel(Base):
     __tablename__ = 'applicants'
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    job_id = Column(String(36), ForeignKey('jobs.id'))    
+    id = Column(Integer, primary_key=True, autoincrement=True)      
+    user_id = Column(Integer, ForeignKey('users.id'))       
 
     def as_dict(cls):
         return {
             "id": cls.id,
-            "user_id": cls.user_id,
-            "job_id": cls.job_id,
+            "user_id": cls.user_id            
         }
+    
+class ApplicantJobsModel(Base):
+    __tablename__ = 'applicant_jobs'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    applicant_id = Column(Integer, ForeignKey('applicants.id'))
+    job_id = Column(String(36), ForeignKey('jobs.id'))    
+    report_id = Column(Integer, ForeignKey('reports.id'))
 
 class EmployersModel(Base):
     __tablename__ = 'employers'
@@ -49,7 +55,7 @@ class EmployersModel(Base):
     company_name = Column(String(255))
     is_premium = Column(Boolean, default=False)   
     user_id = Column(Integer, ForeignKey('users.id'))
-    company_desc = Column(String(1000))
+    company_desc = Column(String(2000))
 
     def as_dict(cls):
         return {            
@@ -72,18 +78,18 @@ class ReportsModel(Base):
     projects = Column(Integer)
     skills = Column(Integer)
     job_id = Column(String(36), ForeignKey('jobs.id'))
-    user_id = Column(Integer, ForeignKey('applicants.id'))
+    applicant_id = Column(Integer, ForeignKey('applicants.id'))
 
 class LinksModel(Base):
     __tablename__ = 'links'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"))        
+    id = Column(Integer, primary_key=True, autoincrement=True)  
     linkedin_link = Column(String(255))
     github_link = Column(String(255))
     leetcode_link = Column(String(255))
     codechef_link = Column(String(255))
     codeforces_link = Column(String(255))
+    applicant_id = Column(Integer, ForeignKey("applicants.id"))        
 
     def to_dict(self):
         return {            
@@ -98,7 +104,7 @@ class EducationModel(Base):
     __tablename__ = 'education'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    applicants_id = Column(Integer, ForeignKey("applicants.id"))
     name = Column(String(255))
     stream = Column(String(255))
     score = Column(String(255))
@@ -118,7 +124,7 @@ class ExperienceModel(Base):
     __tablename__ = 'experience'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    applicants_id = Column(Integer, ForeignKey("applicants.id"))
     company_name = Column(String(255))
     role = Column(String(255))
     role_desc = Column(String(2048))
@@ -138,7 +144,7 @@ class SkillsModel(Base):
     __tablename__ = 'skills'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    applicants_id = Column(Integer, ForeignKey("applicants.id"))
     skills = Column(String(1024))
     coding_skills = Column(String(500))
 

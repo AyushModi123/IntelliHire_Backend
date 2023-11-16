@@ -26,42 +26,50 @@ async def signup(user_data: SignupSchema):
         if role == "employer":
             password = data.get("password1")            
             hashed_pass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())            
-            user_model = UsersModel(
-                name=name,
-                email=email,
-                mob_no=data.get("mob_no"),                               
-                password=hashed_pass,
-                role=role,
-                location=location
-            )
-            db.add(user_model)
-            db.commit()                  
-            employer_model= EmployersModel(
-                company_name=data.get("company_name"), 
-                user_id=user_model.id,
-                is_premium=data.get("is_premium"),
-                company_desc=data.get("company_desc")
-            )
-            db.add(employer_model)
-            db.commit()             
+            try:
+                user_model = UsersModel(
+                    name=name,
+                    email=email,
+                    mob_no=data.get("mob_no"),                               
+                    password=hashed_pass,
+                    role=role,
+                    location=location
+                )
+                db.add(user_model)
+                db.flush()                             
+                employer_model= EmployersModel(
+                    company_name=data.get("company_name"), 
+                    user_id=user_model.id,
+                    is_premium=data.get("is_premium"),
+                    company_desc=data.get("company_desc")
+                )
+                db.add(employer_model)
+                db.commit()             
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
         elif role == "applicant":
             password = data.get("password1")                     
             hashed_pass = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())            
-            user_model = UsersModel(
-                name=name,
-                email=email,
-                mob_no=data.get("mob_no"),                               
-                password=hashed_pass,
-                role=role,
-                location=location
-            )
-            db.add(user_model)
-            # applicant_model = ApplicantsModel(
-            #     user_id=user_model.id,
-            #     job_id=data.get("job_id"),
-            # )
-            # db.add(applicant_model)
-            db.commit()                         
+            try:
+                user_model = UsersModel(
+                    name=name,
+                    email=email,
+                    mob_no=data.get("mob_no"),                               
+                    password=hashed_pass,
+                    role=role,
+                    location=location
+                )
+                db.add(user_model)
+                db.flush()
+                applicant_model = ApplicantsModel(
+                    user_id=user_model.id
+                )
+                db.add(applicant_model)
+                db.commit()                         
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
         access_token = create_access_token({"sub": email})
         return JSONResponse(content={'access_token': access_token, 'name': name, 'role': role}, status_code=201)
 
