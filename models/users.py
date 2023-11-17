@@ -104,7 +104,7 @@ class EducationModel(Base):
     __tablename__ = 'education'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    applicants_id = Column(Integer, ForeignKey("applicants.id"))
+    applicant_id = Column(Integer, ForeignKey("applicants.id"))
     name = Column(String(255))
     stream = Column(String(255))
     score = Column(String(255))
@@ -124,7 +124,7 @@ class ExperienceModel(Base):
     __tablename__ = 'experience'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    applicants_id = Column(Integer, ForeignKey("applicants.id"))
+    applicant_id = Column(Integer, ForeignKey("applicants.id"))
     company_name = Column(String(255))
     role = Column(String(255))
     role_desc = Column(String(2048))
@@ -144,7 +144,7 @@ class SkillsModel(Base):
     __tablename__ = 'skills'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    applicants_id = Column(Integer, ForeignKey("applicants.id"))
+    applicant_id = Column(Integer, ForeignKey("applicants.id"))
     skills = Column(String(1024))
     coding_skills = Column(String(500))
 

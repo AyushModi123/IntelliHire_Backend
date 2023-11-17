@@ -3,7 +3,7 @@ from fastapi import HTTPException, Depends
 from bson import ObjectId
 from schemas import JobDetailsSchema
 from auth import get_current_user
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, RedirectResponse
 from db import db
 from models.jobs import JobsModel
 from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel, ApplicantJobsModel
@@ -101,8 +101,8 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user)):
         jds = []
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()#When Applicant completes application, it should get saved in applicants table
         applicant_job = db.query(ApplicantJobsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()        
-        if not applicant_job:            
-            return Response(status_code=404)
+        if not applicant_job:                        
+            return RedirectResponse(url=f"/job/{job_id}/assessment")
         else:
             report = db.query(ReportsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             jds.append({"id": job.id, "description": job.description, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})

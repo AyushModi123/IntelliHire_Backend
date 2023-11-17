@@ -90,13 +90,13 @@ async def login(user_data: UserLoginSchema):
 
 @router.post("/upload_resume")
 async def upload_resume(file: UploadFile, current_user: str = Depends(get_current_user)):
-    if current_user.role == "applicant":
-        current_user_id = current_user.id
+    if current_user.role == "applicant":    
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         if file.content_type != "application/pdf":
             return HTTPException(status_code=400, detail="Only PDF files are allowed.")
         file_bytes = await file.read()
         de_obj = ResumeParser(io.BytesIO(file_bytes))
-        linkedin_link, github_link, leetcode_link, codechef_link, codeforces_link = de_obj.get_profile_links()
+        linkedin_link, github_link, leetcode_link, codechef_link, codeforces_link = de_obj.get_profile_links()        
         from utils import scrape, data_cleaning
         codingData = scrape((None, codeforces_link, codechef_link, leetcode_link))
         if len(codingData) > 0:
@@ -105,7 +105,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
         doc = de_obj.parse_resume()    
         cand_details = doc.details
         user_details = LinksModel(
-            user_id=current_user_id,        
+            applicant_id=applicant.id,
             linkedin_link = linkedin_link,
             github_link = github_link,
             leetcode_link = leetcode_link,
@@ -114,7 +114,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             )
         for ed in doc.education:
             education = EducationModel(
-                user_id=current_user_id,
+                applicant_id=applicant.id,
                 name=ed.name,
                 stream=ed.stream,
                 score=ed.score,
@@ -123,7 +123,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             )
         for exp in doc.experience:
             experience = ExperienceModel(
-                user_id = current_user_id,
+                applicant_id=applicant.id,
                 company_name=exp.company_name,
                 role=exp.role,
                 role_desc=exp.role_desc,
@@ -131,14 +131,18 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
                 end_date=exp.end_date
             )        
         skills = SkillsModel(
-            user_id=current_user_id,
+            applicant_id=applicant.id,
             skills=doc.skills
             )
-        db.add(user_details)
-        db.add(education)
-        db.add(experience)
-        db.add(skills)
-        db.commit()
+        try:
+            db.add(user_details)
+            db.add(education)
+            db.add(experience)
+            db.add(skills)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Internal Server Error")
         return JSONResponse(content={'message': "PDF file uploaded and parsed successfully."}, status_code=201)
     raise HTTPException(status_code=403, detail="User does not have access to this route.")
 
