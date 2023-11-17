@@ -74,13 +74,15 @@ async def get_jobs(current_user: str = Depends(get_current_user)):
 @router.get('/job/{job_id}')
 async def get_job(job_id: str, current_user: str = Depends(get_current_user)):       
     if current_user.role == "employer":
-        job = db.query(JobsModel).filter_by(id=job_id, user_id=current_user.id).first()
+        current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
+        job = db.query(JobsModel).filter_by(id=job_id, employer_id=current_user.id).first()
         if not job:            
             raise HTTPException(status_code=404, detail="Invalid Job ID")
         job_applicants = []
         # To be implemented
         rank_counter = 1
-        for applicant in db.query(ApplicantsModel).filter_by(job_id=job.id).all():            
+        for applicant_job in db.query(ApplicantJobsModel).filter_by(job_id=job.id).all():            
+            applicant = db.query(ApplicantsModel).filter_by(id=applicant_job.applicant_id).first()
             user_details = db.query(UsersModel).filter_by(id=applicant.user_id).first()
             applicant = applicant.as_dict()
             applicant["rank"] = rank_counter
@@ -90,39 +92,41 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user)):
             job_applicants.append(applicant)
         job = job.as_dict()
         job['applicants'] = job_applicants   
-        del job["user_id"]
+        del job["employer_id"]
         return JSONResponse(content={'data':job}, status_code=200)
     elif current_user.role == "applicant":
         job = db.query(JobsModel).filter_by(id=job_id).first()
         if not job:            
             raise HTTPException(status_code=404, detail="Invalid Job ID")
         jds = []
-        user_job = db.query(ApplicantsModel).filter_by(user_id=current_user.id, job_id=job_id).first()#When Applicant completes application, it should get saved in applicants table
-        if not user_job:            
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()#When Applicant completes application, it should get saved in applicants table
+        applicant_job = db.query(ApplicantJobsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()        
+        if not applicant_job:            
             return Response(status_code=404)
         else:
-            report = db.query(ReportsModel).filter_by(user_id=current_user.id, job_id=job.id).first()
+            report = db.query(ReportsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             jds.append({"id": job.id, "description": job.description, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})
             return JSONResponse(content={'data':jds}, status_code=200)
     
     
 
-@router.delete('/job/{job_id}')
-async def delete_job(job_id: str, current_user: str = Depends(get_current_user)):
-    if current_user.role == "employer":
-        job = db.query(JobsModel).filter_by(id=job_id, user_id=current_user.id).first()    
-        if not job:
-            raise HTTPException(status_code=404, detail="Invalid Job ID")                
-        db.delete(job)
-        db.commit()
-        return Response(status_code=204)
-    return Response(status_code=403)
+# @router.delete('/job/{job_id}')
+# async def delete_job(job_id: str, current_user: str = Depends(get_current_user)):
+#     if current_user.role == "employer":
+#         job = db.query(JobsModel).filter_by(id=job_id, user_id=current_user.id).first()    
+#         if not job:
+#             raise HTTPException(status_code=404, detail="Invalid Job ID")                
+#         db.delete(job)
+#         db.commit()
+#         return Response(status_code=204)
+#     return Response(status_code=403)
 
 @router.put('/job/{job_id}')
 async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str = Depends(get_current_user)):
     if current_user.role == "employer":
+        current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
         job_data = job_data.dict()
-        job = db.query(JobsModel).filter_by(id=job_id, user_id=current_user.id)
+        job = db.query(JobsModel).filter_by(id=job_id, employer_id=current_user.id)
         if not job.first():            
             raise HTTPException(status_code=404, detail="Invalid Job ID")         
         job.update(job_data)
