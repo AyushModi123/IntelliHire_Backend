@@ -131,8 +131,35 @@ async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str 
         job_data = job_data.dict()
         job = db.query(JobsModel).filter_by(id=job_id, employer_id=current_user.id)
         if not job.first():            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")         
-        job.update(job_data)
-        db.commit()
+            raise HTTPException(status_code=404, detail="Invalid Job ID")
+        job_fit_questions = db.query(JobFitQuestionModel).filter_by(job_id=job_id)
+        try:
+            if job_fit_questions.first():
+                job_fit_questions.delete()
+                db.flush()
+            for question in job_data.get("quiz_questions"):
+                    current_question = question.get("question")
+                    options = question.get("quiz_question_options")
+                    current_options = ""
+                    answer_index = 0
+                    for i, option in enumerate(options):
+                        current_options+=option.get("option")
+                        current_options+=";;;"
+                        if option.get("answer"):
+                            answer_index = i
+                    question_model = JobFitQuestionModel(
+                                question=current_question,
+                                choices=current_options,
+                                answer=answer_index,
+                                job_id=job_id
+                            )
+                    db.add(question_model)
+            del job_data["quiz_questions"]
+            job.update(job_data)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(e)
+            raise HTTPException(status_code=500)
         return Response(status_code=204)
     return Response(status_code=403)
