@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from schemas import SignupSchema, UserLoginSchema
 from db import db
+from . import logging, logger
 from fastapi import HTTPException, Depends, UploadFile
 import bcrypt
 from models.users import UsersModel, ApplicantsModel, EmployersModel, LinksModel, SkillsModel, ExperienceModel, EducationModel, ApplicantJobsModel

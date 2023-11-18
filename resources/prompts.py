@@ -4,6 +4,7 @@ from schemas import JobDescriptionSchema, JobFitSchema
 from auth import get_current_user
 from fastapi.responses import JSONResponse, Response
 from db import db
+from . import logging, logger
 from models.users import EmployersModel
 from prompts import job_description_prompt, JobDescriptionPromptsSchema, job_fit_prompt, JobFitQuestionsPromptsSchema
 from utils.prompter import exec_prompt

@@ -5,6 +5,7 @@ from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsMod
 from fastapi.responses import JSONResponse, Response
 from fastapi import HTTPException, Depends
 from db import db
+from . import logging, logger
 
 router = APIRouter(tags=["Assessment"])
 

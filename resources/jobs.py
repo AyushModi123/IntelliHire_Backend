@@ -8,6 +8,8 @@ from db import db
 from models.jobs import JobsModel
 from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel, ApplicantJobsModel
 from models.questions import JobFitQuestionModel, AptitudeQuestionModel
+from . import logging, logger
+
 router = APIRouter(tags=["Jobs/Create-Job"])
 
 @router.post('/create-job')
@@ -47,7 +49,7 @@ async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_c
             db.commit()
         except Exception as e:
             db.rollback()
-            print(e)
+            logging.exception("Exception occurred")
             raise HTTPException(status_code=500, detail=f"Internal Server Error")
         job = db.query(JobsModel).filter_by(id=job_model.id).first()
         job = job.as_dict()
@@ -159,7 +161,7 @@ async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str 
             db.commit()
         except Exception as e:
             db.rollback()
-            print(e)
+            logging.exception("Exception occurred")
             raise HTTPException(status_code=500)
         return Response(status_code=204)
     return Response(status_code=403)
