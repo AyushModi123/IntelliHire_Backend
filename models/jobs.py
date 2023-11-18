@@ -7,7 +7,7 @@ from . import Base
 class JobsModel(Base):
     __tablename__ = 'jobs'
     
-    id = Column(String(36), default=str(uuid.uuid4()), nullable=False, primary_key=True)
+    id = Column(String(36), default=lambda: str(uuid.uuid4()), nullable=False, primary_key=True)
     description = Column(String(2000))
     weights = Column(String(1000))    
     title = Column(String(255))

@@ -35,7 +35,7 @@ class JobFitQuestionSchema(BaseModel):
     quiz_question_options: List[JobFitOptionsSchema]
     
 class JobDetailsSchema(BaseModel):
-    description: constr(min_length=50)
+    description: constr(min_length=1)
     weights: str
     title: constr(min_length=1)
     status: constr(regex="^(active|inactive)$")
