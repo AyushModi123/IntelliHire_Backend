@@ -25,8 +25,7 @@ class UserLoginSchema(BaseModel):
     email: EmailStr
     password: constr(min_length=8, strict=True)
 
-class JobFitOptionsSchema(BaseModel):
-    id: int 
+class JobFitOptionsSchema(BaseModel):    
     option: str 
     answer: bool 
 
