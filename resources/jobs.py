@@ -21,6 +21,8 @@ async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_c
                 weights=data.get("weights"),
                 title=data.get("title"),
                 status=data.get("status"),
+                aptitude_difficulty=data.get("aptitude_difficulty"),
+                skill_difficulty=data.get("skill_difficulty"),
                 employer_id=current_user.id
             )
             db.add(job_model)

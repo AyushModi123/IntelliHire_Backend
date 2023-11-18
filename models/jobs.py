@@ -11,6 +11,8 @@ class JobsModel(Base):
     description = Column(String(2000))
     weights = Column(String(1000))    
     title = Column(String(255))
+    aptitude_difficulty = Column(Enum('easy', 'medium', 'hard', 'mix'))
+    skill_difficulty = Column(Enum('easy', 'medium', 'hard', 'mix'))
     status = Column(Enum('active', 'inactive'), default='active')
     employer_id = Column(Integer, ForeignKey('employers.id'))
     # job = relationship("UsersModel", back_populates="jobs")

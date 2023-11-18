@@ -47,6 +47,24 @@ class ApplicantJobsModel(Base):
     applicant_id = Column(Integer, ForeignKey('applicants.id'))
     job_id = Column(String(36), ForeignKey('jobs.id'))    
     report_id = Column(Integer, ForeignKey('reports.id'))
+    resume = Column(Boolean, default=False)
+    job_fit = Column(Boolean, default=False)
+    aptitude = Column(Boolean, default=False)
+    skill = Column(Boolean, default=False)
+    completed = Column(Boolean, default=False)
+
+    @classmethod
+    def as_dict(cls):
+        return {
+            'id': cls.id,
+            'applicant_id': cls.applicant_id,
+            'job_id': cls.job_id,
+            'report_id': cls.report_id,
+            'resume': cls.resume,
+            'job_fit': cls.job_fit,
+            'aptitude': cls.aptitude,
+            'skill': cls.skill
+        }
 
 class EmployersModel(Base):
     __tablename__ = 'employers'

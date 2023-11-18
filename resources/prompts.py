@@ -21,8 +21,8 @@ router = APIRouter(prefix="/prompt", tags=["prompts"])
 
 @router.post("/job-description")
 async def job_description(data: JobDescriptionSchema, current_user: str = Depends(is_premium)):
-    # job_description = exec_prompt(output_schema=JobDescriptionPromptsSchema, parse_prompt=job_description_prompt, input_data={"company_name": current_user.company_name, "job_title": data.job_title, "domain": data.domain , "tone": data.tone})
-    return JSONResponse(content={"job_description": "job_description.content"})
+    job_description = exec_prompt(output_schema=JobDescriptionPromptsSchema, parse_prompt=job_description_prompt, input_data={"company_name": current_user.company_name, "job_title": data.job_title, "domain": data.domain , "tone": data.tone})
+    return JSONResponse(content={"job_description": job_description.content})
 
 @router.post("/job-fit")
 async def job_fit(data: JobFitSchema, current_user: str = Depends(is_premium)):

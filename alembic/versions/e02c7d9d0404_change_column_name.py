@@ -24,4 +24,7 @@ def upgrade() -> None:
     op.alter_column('skills', 'applicants_id', type_=sa.Integer(), new_column_name='applicant_id')
 
 def downgrade() -> None:
-    pass
+    op.drop_column('applicant_jobs', 'skill')
+    op.drop_column('applicant_jobs', 'aptitude')
+    op.drop_column('applicant_jobs', 'job_fit')
+    op.drop_column('applicant_jobs', 'resume')

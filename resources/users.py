@@ -3,7 +3,7 @@ from schemas import SignupSchema, UserLoginSchema
 from db import db
 from fastapi import HTTPException, Depends, UploadFile
 import bcrypt
-from models.users import UsersModel, ApplicantsModel, EmployersModel, LinksModel, SkillsModel, ExperienceModel, EducationModel
+from models.users import UsersModel, ApplicantsModel, EmployersModel, LinksModel, SkillsModel, ExperienceModel, EducationModel, ApplicantJobsModel
 from utils import ResumeParser, exec_prompt
 import io
 from auth import create_access_token, get_current_user
@@ -104,7 +104,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             print(cleaned_data)
         doc = de_obj.parse_resume()    
         cand_details = doc.details
-        user_details = LinksModel(
+        link = LinksModel(
             applicant_id=applicant.id,
             linkedin_link = linkedin_link,
             github_link = github_link,
@@ -135,7 +135,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             skills=doc.skills
             )
         try:
-            db.add(user_details)
+            db.add(link)
             db.add(education)
             db.add(experience)
             db.add(skills)

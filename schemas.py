@@ -40,6 +40,8 @@ class JobDetailsSchema(BaseModel):
     title: constr(min_length=1)
     status: constr(regex="^(active|inactive)$")
     quiz_questions: List[JobFitQuestionSchema]
+    aptitude_difficulty: constr(regex="^(easy|medium|hard|mix)$")
+    skill_difficulty: constr(regex="^(easy|medium|hard|mix)$")
     
 
     # @validator('weights')
