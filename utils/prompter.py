@@ -6,7 +6,7 @@ import json
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 
-llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=0.0)
+llm = ChatOpenAI(model='gpt-4-1106-preview', temperature=0.0)
 
 def exec_prompt(output_schema, parse_prompt, input_data):
     chain = create_structured_output_chain(output_schema=output_schema, llm=llm, prompt=parse_prompt, verbose=False)

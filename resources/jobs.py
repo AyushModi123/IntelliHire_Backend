@@ -87,6 +87,7 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user)):
             applicant = db.query(ApplicantsModel).filter_by(id=applicant_job.applicant_id).first()
             user_details = db.query(UsersModel).filter_by(id=applicant.user_id).first()
             applicant = applicant.as_dict()
+            del applicant["user_id"]
             applicant["rank"] = rank_counter
             applicant["name"] = user_details.name
             applicant["email"] = user_details.email
