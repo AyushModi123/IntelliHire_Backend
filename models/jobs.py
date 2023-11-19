@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, ARRAY
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, ARRAY, DateTime, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum, UUID
 import uuid
@@ -14,6 +14,7 @@ class JobsModel(Base):
     aptitude_difficulty = Column(Enum('easy', 'medium', 'hard', 'mix'))
     skill_difficulty = Column(Enum('easy', 'medium', 'hard', 'mix'))
     status = Column(Enum('active', 'inactive'), default='active')
+    created_at = Column(DateTime, default=func.now())
     employer_id = Column(Integer, ForeignKey('employers.id'))
     # job = relationship("UsersModel", back_populates="jobs")
     # employer = relationship("ApplicantsModel", backref="jobs")

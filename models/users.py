@@ -90,12 +90,9 @@ class ReportsModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)    
     score = Column(Float)
     status = Column(Enum('pending', 'interview', 'rejected'), default='pending')
-    achievements = Column(Integer)
-    coding_profiles = Column(Integer) 
-    education = Column(Integer)
-    experience = Column(Integer)
-    projects = Column(Integer)
-    skills = Column(Integer)
+    job_fit_score = Column(Integer) # in percentage
+    resume_score = Column(Integer) # in percentage
+    skill_score = Column(Integer) # in percentage
     job_id = Column(String(36), ForeignKey('jobs.id'))
     applicant_id = Column(Integer, ForeignKey('applicants.id'))
 
