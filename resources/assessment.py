@@ -6,6 +6,7 @@ from models.questions import JobFitQuestionModel, AptitudeQuestionModel
 from fastapi.responses import JSONResponse, Response, RedirectResponse
 from fastapi import HTTPException, Depends
 from db import db
+from schemas import JobFitScoreSchema, AptitudeScoreSchema, SkillScoreSchema
 from sqlalchemy import func
 from . import logging, logger
 
@@ -15,56 +16,85 @@ router = APIRouter(prefix="/job/{job_id}/assessment", tags=["Assessment"])
 @router.get("")
 async def assessment(job_id: str, current_user: str = Depends(get_current_user)):
     if current_user.role == "applicant":
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job:            
+            raise HTTPException(status_code=404, detail="Invalid Job ID")        
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
         if not applicant_job:
             return RedirectResponse(url=f"/job/{job_id}/apply")
-        job = db.query(JobsModel).filter_by(id=job_id).first()
-        if not job:            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")        
         applicant_job = applicant_job.as_dict()
         del applicant_job["id"]
-        del applicant_job["applicant_id"]
+        del applicant_job["applicant_id"]        
         return JSONResponse(content={'data': applicant_job})
     raise HTTPException(status_code=403)
 
 @router.get("/job-fit")
 async def job_fit(job_id: str, current_user: str = Depends(get_current_user)):
     if current_user.role == "applicant":
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job:            
+            raise HTTPException(status_code=404, detail="Invalid Job ID")        
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
         if not applicant_job:
             return RedirectResponse(url=f"/job/{job_id}/apply")
         if applicant_job.job_fit:
-            return Response(status_code=403, content={"message": "Already Completed"})
-        job = db.query(JobsModel).filter_by(id=job_id).first()
-        if not job:            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")        
+            return Response(status_code=400, content="Already Completed")
         job_fit_questions_model = db.query(JobFitQuestionModel).filter_by(job_id=job_id).all()
         job_fit_questions = []
         for job_fit_question_model in job_fit_questions_model:
             job_fit_question_dict = job_fit_question_model.as_dict()
             del job_fit_question_dict["id"]
             job_fit_questions.append(job_fit_question_dict)
-        applicant_job.job_fit = True
+        # applicant_job.job_fit = True
         db.commit()
         return JSONResponse(content={"data": job_fit_questions})
     raise HTTPException(status_code=403)
 
-@router.get("/aptitude")
-async def aptitude(job_id: str, current_user: str = Depends(get_current_user)):
+@router.post("/job-fit")
+async def job_fit(score: JobFitScoreSchema, job_id: str, current_user: str = Depends(get_current_user)):
     if current_user.role == "applicant":
+        try:
+            job = db.query(JobsModel).filter_by(id=job_id).first()
+            if not job:            
+                raise HTTPException(status_code=404, detail="Invalid Job ID")        
+            applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+            applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            if not applicant_job:
+                return RedirectResponse(url=f"/job/{job_id}/apply")
+            if not applicant_job.job_fit:
+                return Response(status_code=400, content="First give assessment")
+            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()
+            if report:
+                return Response(status_code=400, content="Already Completed")
+            report = ReportsModel(
+                job_fit_score=score.score,
+                job_id=job_id,
+                applicant_id=applicant.id
+            )
+            db.add(report)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logging.exception("Exception occurred")
+            raise HTTPException(status_code=500)
+    return Response(status_code=403)   
+ 
+@router.get("/aptitude")
+async def get_aptitude(job_id: str, current_user: str = Depends(get_current_user)):
+    if current_user.role == "applicant":
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job:            
+            raise HTTPException(status_code=404, detail="Invalid Job ID")        
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
         if not applicant_job:
             return RedirectResponse(url=f"/job/{job_id}/apply")
         if not applicant_job.job_fit:
-            return Response(status_code=403, content={"message": "Complete Previous Stages First"})
+            return Response(status_code=400, content= "Complete Previous Stages First")
         if applicant_job.aptitude:
-            return Response(status_code=403, content={"message": "Already Completed"})
-        job = db.query(JobsModel).filter_by(id=job_id).first()
-        if not job:            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")        
+            return Response(status_code=400, content= "Already Completed")
         difficulty = job.aptitude_difficulty        
         aptitude_questions_model = (
                     db.query(AptitudeQuestionModel)
@@ -83,23 +113,70 @@ async def aptitude(job_id: str, current_user: str = Depends(get_current_user)):
         return JSONResponse(content={"data": aptitude_questions})
     raise HTTPException(status_code=403)
 
-@router.get("/skill")
-async def skill(job_id: str, current_user: str = Depends(get_current_user)):
+@router.post("/aptitude")
+async def aptitude(score: AptitudeScoreSchema, job_id: str, current_user: str = Depends(get_current_user)):
     if current_user.role == "applicant":
+        try:
+            job = db.query(JobsModel).filter_by(id=job_id).first()
+            if not job:            
+                raise HTTPException(status_code=404, detail="Invalid Job ID")        
+            applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+            applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            if not applicant_job:
+                return RedirectResponse(url=f"/job/{job_id}/apply")
+            if not applicant_job.aptitude:
+                return Response(status_code=400, content= "First give assessment")
+            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()
+            if not report:
+                return Response(status_code=400, content= "Complete Previous Stages First")
+            report.aptitude_score = score.score            
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logging.exception("Exception occurred")
+            raise HTTPException(status_code=500)
+
+@router.get("/skill")
+async def get_skill(job_id: str, current_user: str = Depends(get_current_user)):
+    if current_user.role == "applicant":
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job:            
+            raise HTTPException(status_code=404, detail="Invalid Job ID") 
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
         if not applicant_job:
             return RedirectResponse(url=f"/job/{job_id}/apply")
         if not applicant_job.aptitude:
-            return Response(status_code=403, content={"message": "Complete Previous Stages First"})
+            return Response(status_code=400, content= "Complete Previous Stages First")
         if applicant_job.skill:
-            return Response(status_code=403, content={"message": "Already Completed"})
-        job = db.query(JobsModel).filter_by(id=job_id).first()
-        if not job:            
-            raise HTTPException(status_code=404, detail="Invalid Job ID") 
+            return Response(status_code=400, content= "Already Completed")
         applicant_job.skill = True
         applicant_job.completed = True
         db.commit()
         #TO BE IMPLEMENTED
         return JSONResponse(content={"data": "TO BE IMPLEMENTED"})
+    raise HTTPException(status_code=403)
+
+@router.post("/skill")
+async def skill(score: SkillScoreSchema, job_id: str, current_user: str = Depends(get_current_user)):
+    if current_user.role == "applicant":
+        try:
+            job = db.query(JobsModel).filter_by(id=job_id).first()
+            if not job:            
+                raise HTTPException(status_code=404, detail="Invalid Job ID")        
+            applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+            applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            if not applicant_job:
+                return RedirectResponse(url=f"/job/{job_id}/apply")
+            if not applicant_job.skill:
+                return Response(status_code=400, content= "First give assessment")
+            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()
+            if not report:
+                return Response(status_code=400, content= "Complete Previous Stages First")
+            report.skill_score = score.score            
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logging.exception("Exception occurred")
+            raise HTTPException(status_code=500)
     raise HTTPException(status_code=403)

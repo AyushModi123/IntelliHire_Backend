@@ -173,6 +173,8 @@ async def post_apply_job(job_id: str, current_user: str = Depends(get_current_us
             applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             if applicant_job:
                 return HTTPException(status_code=409, detail="Already Applied")
+            if not applicant.resume:
+                return HTTPException(status_code=404, detail="Resume Not Found")
             applicant_job = ApplicantJobsModel(
                 applicant_id=applicant.id,
                 job_id=job_id,

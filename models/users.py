@@ -54,7 +54,6 @@ class ApplicantJobsModel(Base):
     skill = Column(Boolean, default=False)
     completed = Column(Boolean, default=False)
 
-    @classmethod
     def as_dict(cls):
         return {
             'id': cls.id,
@@ -90,9 +89,9 @@ class ReportsModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)    
     score = Column(Float)
     status = Column(Enum('pending', 'interview', 'rejected'), default='pending')
-    job_fit_score = Column(Integer) # in percentage
-    resume_score = Column(Integer) # in percentage
-    skill_score = Column(Integer) # in percentage
+    job_fit_score = Column(Boolean, default=False)  # passed or not
+    aptitude_score = Column(Float, default=0.0) # in percentage
+    skill_score = Column(Float, default=0.0) # in percentage
     job_id = Column(String(36), ForeignKey('jobs.id'))
     applicant_id = Column(Integer, ForeignKey('applicants.id'))
 
