@@ -25,5 +25,7 @@ class JobsModel(Base):
             "weights": cls.weights,
             "title": cls.title,
             "status": cls.status,
-            "employer_id": cls.employer_id
+            "employer_id": cls.employer_id,
+            "aptitude_difficulty": cls.aptitude_difficulty,
+            "skill_difficulty": cls.skill_difficulty
         }

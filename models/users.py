@@ -32,7 +32,8 @@ class ApplicantsModel(Base):
     __tablename__ = 'applicants'
     
     id = Column(Integer, primary_key=True, autoincrement=True)      
-    user_id = Column(Integer, ForeignKey('users.id'))       
+    user_id = Column(Integer, ForeignKey('users.id'))
+    resume = Column(Boolean, default=False)
 
     def as_dict(cls):
         return {

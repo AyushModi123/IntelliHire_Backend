@@ -99,21 +99,7 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user)):
         job['applicants'] = job_applicants   
         del job["employer_id"]
         return JSONResponse(content={'data':job}, status_code=200)
-    elif current_user.role == "applicant":
-        job = db.query(JobsModel).filter_by(id=job_id).first()
-        if not job:            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")
-        jds = []
-        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()#When Applicant completes application, it should get saved in applicants table
-        applicant_job = db.query(ApplicantJobsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()        
-        if not applicant_job:                        
-            return RedirectResponse(url=f"/job/{job_id}/assessment")
-        else:
-            report = db.query(ReportsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
-            jds.append({"id": job.id, "description": job.description, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})
-            return JSONResponse(content={'data':jds}, status_code=200)
-    
-    
+    return Response(status_code=403)
 
 # @router.delete('/job/{job_id}')
 # async def delete_job(job_id: str, current_user: str = Depends(get_current_user)):
@@ -165,3 +151,59 @@ async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str 
             raise HTTPException(status_code=500)
         return Response(status_code=204)
     return Response(status_code=403)
+
+@router.get('/job/{job_id}/apply')
+async def get_apply_job(job_id: str, current_user: str = Depends(get_current_user)):
+    if current_user.role == 'applicant':
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+        applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+        if not applicant_job:
+            return Response(status_code=200)
+        if applicant_job.completed:
+            return RedirectResponse(url=f"/job/{job_id}/result")
+        else:
+            return RedirectResponse(url=f"/job/{job_id}/assessment")
+    return Response(status_code=403)
+
+@router.post('/job/{job_id}/apply')
+async def post_apply_job(job_id: str, current_user: str = Depends(get_current_user)):
+    if current_user.role == 'applicant':
+        try:
+            applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+            applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            if applicant_job:
+                return HTTPException(status_code=409, detail="Already Applied")
+            applicant_job = ApplicantJobsModel(
+                applicant_id=applicant.id,
+                job_id=job_id,
+                resume=applicant.resume,
+            )
+            db.add(applicant_job)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logging.exception("Exception occurred")
+            raise HTTPException(status_code=500)
+        return Response(status_code=201)
+    return Response(status_code=403)
+
+
+@router.get("/job/{job_id}/result")
+async def job_result(job_id: str, current_user: str = Depends(get_current_user)):
+    if current_user.role == "applicant":
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job:            
+            raise HTTPException(status_code=404, detail="Invalid Job ID")
+        jds = []
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()#When Applicant completes application, it should get saved in applicants table
+        applicant_job = db.query(ApplicantJobsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()        
+        if not applicant_job:                        
+            return RedirectResponse(url=f"/job/{job_id}/apply")
+        else:
+            if not applicant_job.completed:
+                return RedirectResponse(url=f"/job/{job_id}/assessment")
+            report = db.query(ReportsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            jds.append({"id": job.id, "description": job.description, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})
+            return JSONResponse(content={'data':jds}, status_code=200)
+    return Response(status_code=403)
+            

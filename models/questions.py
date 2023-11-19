@@ -14,6 +14,14 @@ class JobFitQuestionModel(Base):
 
     job_id = Column(String(36), ForeignKey('jobs.id'))
 
+    @classmethod
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'question': self.question,
+            'choices': self.choices.split(';;;') if self.choices else [],
+            'answer': self.answer,            
+        }
 
 class AptitudeQuestionModel(Base):
     __tablename__ = 'aptitude_questions'
@@ -23,3 +31,13 @@ class AptitudeQuestionModel(Base):
     choices = Column(String(5000))  #Separate choices by ';;;'
     answer = Column(Integer) #Store correct choice's number
     difficulty = Column(Enum('easy', 'medium', 'hard'))
+
+    @classmethod
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'question': self.question,
+            'choices': self.choices.split(';;;') if self.choices else [],
+            'answer': self.answer,
+            'difficulty': self.difficulty.value if self.difficulty else None
+        }

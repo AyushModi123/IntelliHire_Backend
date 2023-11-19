@@ -140,6 +140,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             db.add(education)
             db.add(experience)
             db.add(skills)
+            applicant.resume = True
             db.commit()
         except Exception as e:
             db.rollback()
