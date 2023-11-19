@@ -8,7 +8,7 @@ class JobsModel(Base):
     __tablename__ = 'jobs'
     
     id = Column(String(36), default=lambda: str(uuid.uuid4()), nullable=False, primary_key=True)
-    description = Column(String(2000))
+    description = Column(String(10000))
     weights = Column(String(1000))    
     title = Column(String(255))
     aptitude_difficulty = Column(Enum('easy', 'medium', 'hard', 'mix'))
