@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from schemas import SignupSchema, UserLoginSchema
-from db import db
+from db import get_db, Session
 from . import logging, logger
 from fastapi import HTTPException, Depends, UploadFile
 import bcrypt
@@ -14,7 +14,7 @@ from typing import Union
 router = APIRouter(tags=["Users/Resume"])
 
 @router.post("/signup")
-async def signup(user_data: SignupSchema):
+async def signup(user_data: SignupSchema, db: Session = Depends(get_db)):
     data = user_data.dict()
     role = data.get("role")
     email = data.get("email")      
@@ -75,7 +75,7 @@ async def signup(user_data: SignupSchema):
         return JSONResponse(content={'access_token': access_token, 'name': name, 'role': role}, status_code=201)
 
 @router.post("/login")
-async def login(user_data: UserLoginSchema):
+async def login(user_data: UserLoginSchema, db: Session = Depends(get_db)):
     email = user_data.email
     password = user_data.password    
     user = db.query(UsersModel).filter_by(email=email).first()
@@ -90,7 +90,7 @@ async def login(user_data: UserLoginSchema):
     raise HTTPException(status_code=401, detail="Email or Password do not match.")
 
 @router.post("/upload_resume")
-async def upload_resume(file: UploadFile, current_user: str = Depends(get_current_user)):
+async def upload_resume(file: UploadFile, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role == "applicant":    
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         if file.content_type != "application/pdf":
@@ -149,7 +149,7 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
     raise HTTPException(status_code=403, detail="User does not have access to this route.")
 
 @router.get("/details")
-async def get_details(current_user: str = Depends(get_current_user)):    
+async def get_details(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):    
     if current_user.role == "employer":
         employer_details = db.query(EmployersModel).filter_by(user_id=current_user.id).first().as_dict()
         employer_details = employer_details | {

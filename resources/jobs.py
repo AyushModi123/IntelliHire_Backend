@@ -4,7 +4,7 @@ from bson import ObjectId
 from schemas import JobDetailsSchema
 from auth import get_current_user
 from fastapi.responses import JSONResponse, Response, RedirectResponse
-from db import db
+from db import get_db, Session
 from models.jobs import JobsModel
 from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel, ApplicantJobsModel
 from models.questions import JobFitQuestionModel, AptitudeQuestionModel
@@ -13,7 +13,7 @@ from . import logging, logger
 router = APIRouter(tags=["Jobs/Create-Job"])
 
 @router.post('/create-job')
-async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_current_user)):    
+async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):    
     if current_user.role == "employer":
         current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
         data = job_data.dict()
@@ -57,12 +57,13 @@ async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_c
     return Response(status_code=403)
 
 @router.get('/jobs')
-async def get_jobs(current_user: str = Depends(get_current_user)):    
+async def get_jobs(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):    
     if current_user.role == "employer":
         current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
         jds = []
         for job in db.query(JobsModel).filter_by(employer_id=current_user.id).all():
-            jds.append({"id": job.id, "title": job.title, 'status': job.status})        
+            if job.status == 'active':
+                jds.append({"id": job.id, "title": job.title, 'status': job.status})        
         return JSONResponse(content={'data':jds}, status_code=200)
     elif current_user.role == "applicant":
         current_user = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
@@ -81,12 +82,12 @@ async def get_jobs(current_user: str = Depends(get_current_user)):
     raise HTTPException(status_code=403)
 
 @router.get('/job/{job_id}')
-async def get_job(job_id: str, current_user: str = Depends(get_current_user)):       
+async def get_job(job_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):       
     if current_user.role == "employer":
         current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
-        job = db.query(JobsModel).filter_by(id=job_id, employer_id=current_user.id).first()
-        if not job:            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job or job.status == 'inactive':
+            raise HTTPException(status_code=404, detail="Invalid Job ID")  
         job_applicants = []
         # To be implemented
         rank_counter = 1
@@ -106,62 +107,63 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user)):
         return JSONResponse(content={'data':job}, status_code=200)
     return Response(status_code=403)
 
-# @router.delete('/job/{job_id}')
-# async def delete_job(job_id: str, current_user: str = Depends(get_current_user)):
+@router.delete('/job/{job_id}')
+async def delete_job(job_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role == "employer":
+        current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
+        job = db.query(JobsModel).filter_by(id=job_id, employer_id=current_user.id).first()    
+        if not job:
+            raise HTTPException(status_code=404, detail="Invalid Job ID")                
+        job.status = 'inactive'
+        db.commit()
+        return Response(status_code=200)
+    return Response(status_code=403)
+
+# @router.put('/job/{job_id}')
+# async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
 #     if current_user.role == "employer":
-#         job = db.query(JobsModel).filter_by(id=job_id, user_id=current_user.id).first()    
-#         if not job:
-#             raise HTTPException(status_code=404, detail="Invalid Job ID")                
-#         db.delete(job)
-#         db.commit()
+#         current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
+#         job_data = job_data.dict()
+#         job = db.query(JobsModel).filter_by(id=job_id).first()
+#         if not job or job.status == 'inactive':
+#             raise HTTPException(status_code=404, detail="Invalid Job ID")  
+#         job_fit_questions = db.query(JobFitQuestionModel).filter_by(job_id=job_id)
+#         try:
+#             if job_fit_questions.first():
+#                 job_fit_questions.delete()
+#                 db.flush()
+#             for question in job_data.get("quiz_questions"):
+#                     current_question = question.get("question")
+#                     options = question.get("quiz_question_options")
+#                     current_options = ""
+#                     answer_index = 0
+#                     for i, option in enumerate(options):
+#                         current_options+=option.get("option")
+#                         current_options+=";;;"
+#                         if option.get("answer"):
+#                             answer_index = i
+#                     question_model = JobFitQuestionModel(
+#                                 question=current_question,
+#                                 choices=current_options,
+#                                 answer=answer_index,
+#                                 job_id=job_id
+#                             )
+#                     db.add(question_model)
+#             del job_data["quiz_questions"]
+#             job.update(job_data)
+#             db.commit()
+#         except Exception as e:
+#             db.rollback()
+#             logging.exception("Exception occurred")
+#             raise HTTPException(status_code=500)
 #         return Response(status_code=204)
 #     return Response(status_code=403)
 
-@router.put('/job/{job_id}')
-async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str = Depends(get_current_user)):
-    if current_user.role == "employer":
-        current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
-        job_data = job_data.dict()
-        job = db.query(JobsModel).filter_by(id=job_id, employer_id=current_user.id)
-        if not job.first():            
-            raise HTTPException(status_code=404, detail="Invalid Job ID")
-        job_fit_questions = db.query(JobFitQuestionModel).filter_by(job_id=job_id)
-        try:
-            if job_fit_questions.first():
-                job_fit_questions.delete()
-                db.flush()
-            for question in job_data.get("quiz_questions"):
-                    current_question = question.get("question")
-                    options = question.get("quiz_question_options")
-                    current_options = ""
-                    answer_index = 0
-                    for i, option in enumerate(options):
-                        current_options+=option.get("option")
-                        current_options+=";;;"
-                        if option.get("answer"):
-                            answer_index = i
-                    question_model = JobFitQuestionModel(
-                                question=current_question,
-                                choices=current_options,
-                                answer=answer_index,
-                                job_id=job_id
-                            )
-                    db.add(question_model)
-            del job_data["quiz_questions"]
-            job.update(job_data)
-            db.commit()
-        except Exception as e:
-            db.rollback()
-            logging.exception("Exception occurred")
-            raise HTTPException(status_code=500)
-        return Response(status_code=204)
-    return Response(status_code=403)
-
 @router.get('/job/{job_id}/apply')
-async def get_apply_job(job_id: str, current_user: str = Depends(get_current_user)):
+async def get_apply_job(job_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role == 'applicant':
         job = db.query(JobsModel).filter_by(id=job_id).first()
-        if not job:            
+        if not job or job.status == 'inactive':
             raise HTTPException(status_code=404, detail="Invalid Job ID")        
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()        
@@ -174,9 +176,12 @@ async def get_apply_job(job_id: str, current_user: str = Depends(get_current_use
     return Response(status_code=403)
 
 @router.post('/job/{job_id}/apply')
-async def post_apply_job(job_id: str, current_user: str = Depends(get_current_user)):
+async def post_apply_job(job_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role == 'applicant':
         try:
+            job = db.query(JobsModel).filter_by(id=job_id).first()
+            if not job or job.status == 'inactive':
+                raise HTTPException(status_code=404, detail="Invalid Job ID")  
             applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
             applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             if applicant_job:
@@ -199,7 +204,7 @@ async def post_apply_job(job_id: str, current_user: str = Depends(get_current_us
 
 
 @router.get("/job/{job_id}/result")
-async def job_result(job_id: str, current_user: str = Depends(get_current_user)):
+async def job_result(job_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role == "applicant":
         job = db.query(JobsModel).filter_by(id=job_id).first()
         if not job:            

@@ -19,7 +19,6 @@ class UsersModel(Base):
     employer = relationship("EmployersModel", backref="user")
     # job = relationship("JobsModel", back_populates="users")
 
-    @classmethod
     def as_dict(cls):        
         return {
             "name": cls.name,

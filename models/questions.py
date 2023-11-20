@@ -13,8 +13,7 @@ class JobFitQuestionModel(Base):
     answer = Column(Integer) #Store correct choice's number    
 
     job_id = Column(String(36), ForeignKey('jobs.id'))
-
-    @classmethod
+    
     def as_dict(self):
         return {
             'id': self.id,
@@ -32,7 +31,6 @@ class AptitudeQuestionModel(Base):
     answer = Column(Integer) #Store correct choice's number
     difficulty = Column(Enum('easy', 'medium', 'hard'))
 
-    @classmethod
     def as_dict(self):
         return {
             'id': self.id,

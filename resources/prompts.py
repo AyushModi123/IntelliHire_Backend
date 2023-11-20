@@ -3,13 +3,13 @@ from fastapi import HTTPException, Depends
 from schemas import JobDescriptionSchema, JobFitSchema
 from auth import get_current_user
 from fastapi.responses import JSONResponse, Response
-from db import db
+from db import get_db, Session
 from . import logging, logger
 from models.users import EmployersModel
 from prompts import job_description_prompt, JobDescriptionPromptsSchema, job_fit_prompt, JobFitQuestionsPromptsSchema
 from utils.prompter import exec_prompt
 
-async def is_premium(current_user: str = Depends(get_current_user)):    
+async def is_premium(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):    
     current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
     if current_user:
         if not current_user.is_premium:

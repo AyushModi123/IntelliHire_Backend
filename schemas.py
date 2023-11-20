@@ -60,11 +60,15 @@ class JobFitSchema(BaseModel):
     job_description: constr(min_length=1)
     exclude_ques: Optional[List[str]]
 
+class AnswerSubSchema(BaseModel):
+    id: int 
+    answer_index: int
+
 class JobFitScoreSchema(BaseModel):
-    score: bool #pass or not
+    answers: List[AnswerSubSchema]    
 
 class AptitudeScoreSchema(BaseModel):
-    score: float #percentage
+    answers: List[AnswerSubSchema]    
 
 class SkillScoreSchema(BaseModel):
-    score: float #percentage
+    answers: List[AnswerSubSchema]
