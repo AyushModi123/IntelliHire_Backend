@@ -48,9 +48,7 @@ async def job_fit(job_id: str, current_user: str = Depends(get_current_user), db
             for job_fit_question_model in job_fit_questions_model:
                 job_fit_question_dict = job_fit_question_model.as_dict()
                 del job_fit_question_dict["answer"]
-                job_fit_questions.append(job_fit_question_dict)
-            applicant_job.job_fit = True
-            db.commit()
+                job_fit_questions.append(job_fit_question_dict)        
             return JSONResponse(content={"data": job_fit_questions})
         except Exception as e:
             db.rollback()
@@ -85,6 +83,7 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
                 job_id=job_id,
                 applicant_id=applicant.id
             )
+            applicant_job.job_fit = True            
             db.add(report)
             db.commit()
         except Exception as e:
