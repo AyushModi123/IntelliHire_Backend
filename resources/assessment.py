@@ -66,9 +66,7 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
             applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
             applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             if not applicant_job:
-                return RedirectResponse(url=f"/job/{job_id}/apply")
-            if not applicant_job.job_fit:
-                return Response(status_code=400, content="First give assessment")
+                return RedirectResponse(url=f"/job/{job_id}/apply")            
             report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()
             if report:
                 return Response(status_code=400, content="Already Completed")
@@ -86,6 +84,7 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
             applicant_job.job_fit = True            
             db.add(report)
             db.commit()
+            return Response(status_code=200)
         except Exception as e:
             db.rollback()
             logging.exception("Exception occurred")

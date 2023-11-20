@@ -239,6 +239,7 @@ async def get_details(current_user: str = Depends(get_current_user), db: Session
         return JSONResponse(content={"data": employer_details})
     if current_user.role == "applicant":
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+        links_data = {}
         if applicant.resume:
             links_data = db.query(LinksModel).filter_by(applicant_id=applicant.id).first().to_dict()
         applicant_details = {
