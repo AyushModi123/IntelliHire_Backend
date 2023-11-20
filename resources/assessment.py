@@ -109,7 +109,7 @@ async def get_aptitude(job_id: str, current_user: str = Depends(get_current_user
         if not applicant_job:
             return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)
         if job.is_job_fit and not applicant_job.job_fit:
-            return Response(status_code=400, content= "Complete Previous Stages First")
+            return Response(status_code=400, content= "Complete Job Fit First")
         if job.is_job_fit and not report.job_fit_score:
             return Response(status_code=403)
         if applicant_job.aptitude:
@@ -142,11 +142,15 @@ async def aptitude(data: AptitudeScoreSchema, job_id: str, current_user: str = D
         try:
             applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
             applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
             if not applicant_job:
-                return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)            
+                return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307) 
+            if job.is_job_fit and not applicant_job.job_fit:
+                return Response(status_code=400, content= "Complete Job Fit First")
+            if job.is_job_fit and not report.job_fit_score:
+                return Response(status_code=403)           
             if applicant_job.aptitude:
                 return Response(status_code=400, content= "Already Completed")
-            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
             score = 0
             for answer in data.answers:
                 job_fit_question = db.query(JobFitQuestionModel).filter_by(id=answer.id, answer=answer.answer_index).first()
@@ -170,6 +174,11 @@ async def get_skill(job_id: str, current_user: str = Depends(get_current_user), 
             raise HTTPException(status_code=400)
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+        report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
+        if job.is_job_fit and not applicant_job.job_fit:
+            return Response(status_code=400, content= "Complete Job Fit First")
+        if job.is_job_fit and not report.job_fit_score:
+            return Response(status_code=403)
         if not applicant_job:
             return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)        
         if applicant_job.skill:
@@ -192,8 +201,13 @@ async def skill(data: SkillScoreSchema, job_id: str, current_user: str = Depends
         try:
             applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
             applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
             if not applicant_job:
-                return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)            
+                return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)     
+            if job.is_job_fit and not applicant_job.job_fit:
+                return Response(status_code=400, content= "Complete Job Fit First")
+            if job.is_job_fit and not report.job_fit_score:
+                return Response(status_code=403)       
             if applicant_job.skill:
                 return Response(status_code=400, content= "Already Completed")
             report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
