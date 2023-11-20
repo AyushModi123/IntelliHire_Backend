@@ -68,10 +68,15 @@ async def get_jobs(current_user: str = Depends(get_current_user)):
         current_user = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         jds = []
         applicant_jobs = db.query(ApplicantJobsModel).filter_by(applicant_id=current_user.id).all()
-        for applicant_job in applicant_jobs:
-            job = db.query(JobsModel).filter_by(id=applicant_job.job_id).first()
+        for applicant_job in applicant_jobs:            
+            job = db.query(JobsModel).filter_by(id=applicant_job.job_id).first()            
             report = db.query(ReportsModel).filter_by(id=applicant_job.report_id).first()
-            jds.append({"id": job.id, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})
+            report_status = None
+            report_score = None
+            if report:
+                report_status = report.status
+                report_score = report.score
+            jds.append({"id": job.id, "title": job.title, 'job_status': job.status, "candidate_status": report_status, "score": report_score})
         return JSONResponse(content={'data':jds}, status_code=200)
     raise HTTPException(status_code=403)
 
@@ -155,10 +160,13 @@ async def update_job(job_id: str, job_data: JobDetailsSchema, current_user: str 
 @router.get('/job/{job_id}/apply')
 async def get_apply_job(job_id: str, current_user: str = Depends(get_current_user)):
     if current_user.role == 'applicant':
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job:            
+            raise HTTPException(status_code=404, detail="Invalid Job ID")        
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
-        applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+        applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()        
         if not applicant_job:
-            return Response(status_code=200)
+            return JSONResponse(content={"data": {"resume": True, "job_title": job.title, "job_description": job.description}})
         if applicant_job.completed:
             return RedirectResponse(url=f"/job/{job_id}/result")
         else:

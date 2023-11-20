@@ -25,7 +25,8 @@ async def assessment(job_id: str, current_user: str = Depends(get_current_user))
             return RedirectResponse(url=f"/job/{job_id}/apply")
         applicant_job = applicant_job.as_dict()
         del applicant_job["id"]
-        del applicant_job["applicant_id"]        
+        del applicant_job["applicant_id"]
+        del applicant_job["report_id"]        
         return JSONResponse(content={'data': applicant_job})
     raise HTTPException(status_code=403)
 
