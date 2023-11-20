@@ -188,6 +188,7 @@ async def post_apply_job(job_id: str, current_user: str = Depends(get_current_us
             raise HTTPException(status_code=404, detail="Resume Not Found")
         try:
             report_model = ReportsModel(
+                job_fit_score=not job.is_job_fit,
                 job_id=job_id,
                 applicant_id=applicant.id
             )
@@ -196,13 +197,15 @@ async def post_apply_job(job_id: str, current_user: str = Depends(get_current_us
             applicant_job = ApplicantJobsModel(
                 applicant_id=applicant.id,
                 job_id=job_id,
+                job_fit=not job.is_job_fit,
+                aptitude=not job.is_aptitude,
+                skill=not job.is_skill,
                 report_id=report_model.id,
                 resume=applicant.resume,
             )
             db.add(applicant_job)
             db.commit()
-        except Exception as e:
-            print(e)
+        except Exception as e:            
             db.rollback()
             logging.exception("Exception occurred")
             raise HTTPException(status_code=500)
