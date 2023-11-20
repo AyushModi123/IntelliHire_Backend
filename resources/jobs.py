@@ -61,9 +61,8 @@ async def get_jobs(current_user: str = Depends(get_current_user), db: Session = 
     if current_user.role == "employer":
         current_user = db.query(EmployersModel).filter_by(user_id=current_user.id).first()
         jds = []
-        for job in db.query(JobsModel).filter_by(employer_id=current_user.id).all():
-            if job.status == 'active':
-                jds.append({"id": job.id, "title": job.title, 'status': job.status})        
+        for job in db.query(JobsModel).filter_by(employer_id=current_user.id).all():            
+            jds.append({"id": job.id, "title": job.title, 'status': job.status})        
         return JSONResponse(content={'data':jds}, status_code=200)
     elif current_user.role == "applicant":
         current_user = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
@@ -178,24 +177,25 @@ async def get_apply_job(job_id: str, current_user: str = Depends(get_current_use
 @router.post('/job/{job_id}/apply')
 async def post_apply_job(job_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role == 'applicant':
+        job = db.query(JobsModel).filter_by(id=job_id).first()
+        if not job or job.status == 'inactive':
+            raise HTTPException(status_code=404, detail="Invalid Job ID")          
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+        applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+        if applicant_job:
+            return HTTPException(status_code=409, detail="Already Applied")
+        if not applicant.resume:
+            return HTTPException(status_code=404, detail="Resume Not Found")
+        applicant_job = ApplicantJobsModel(
+            applicant_id=applicant.id,
+            job_id=job_id,
+            resume=applicant.resume,
+        )
         try:
-            job = db.query(JobsModel).filter_by(id=job_id).first()
-            if not job or job.status == 'inactive':
-                raise HTTPException(status_code=404, detail="Invalid Job ID")  
-            applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
-            applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
-            if applicant_job:
-                return HTTPException(status_code=409, detail="Already Applied")
-            if not applicant.resume:
-                return HTTPException(status_code=404, detail="Resume Not Found")
-            applicant_job = ApplicantJobsModel(
-                applicant_id=applicant.id,
-                job_id=job_id,
-                resume=applicant.resume,
-            )
             db.add(applicant_job)
             db.commit()
         except Exception as e:
+            print(e)
             db.rollback()
             logging.exception("Exception occurred")
             raise HTTPException(status_code=500)
