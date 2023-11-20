@@ -105,41 +105,41 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             print(cleaned_data)
         doc = de_obj.parse_resume()    
         cand_details = doc.details
-        link = LinksModel(
-            applicant_id=applicant.id,
-            linkedin_link = linkedin_link,
-            github_link = github_link,
-            leetcode_link = leetcode_link,
-            codechef_link = codechef_link,
-            codeforces_link = codeforces_link
-            )
-        for ed in doc.education:
-            education = EducationModel(
-                applicant_id=applicant.id,
-                name=ed.name,
-                stream=ed.stream,
-                score=ed.score,
-                location=ed.location,
-                graduation_year=ed.graduation_year
-            )
-        for exp in doc.experience:
-            experience = ExperienceModel(
-                applicant_id=applicant.id,
-                company_name=exp.company_name,
-                role=exp.role,
-                role_desc=exp.role_desc,
-                start_date=exp.start_date,
-                end_date=exp.end_date
-            )        
-        skills = SkillsModel(
-            applicant_id=applicant.id,
-            skills=doc.skills
-            )
         try:
+            link = LinksModel(
+                applicant_id=applicant.id,
+                linkedin_link = linkedin_link,
+                github_link = github_link,
+                leetcode_link = leetcode_link,
+                codechef_link = codechef_link,
+                codeforces_link = codeforces_link
+                )
             db.add(link)
-            db.add(education)
-            db.add(experience)
-            db.add(skills)
+            for ed in doc.education:
+                education = EducationModel(
+                    applicant_id=applicant.id,
+                    name=ed.name,
+                    stream=ed.stream,
+                    score=ed.score,
+                    location=ed.location,
+                    graduation_year=ed.graduation_year
+                )
+                db.add(education)
+            for exp in doc.experience:
+                experience = ExperienceModel(
+                    applicant_id=applicant.id,
+                    company_name=exp.company_name,
+                    role=exp.role,
+                    role_desc=exp.role_desc,
+                    start_date=exp.start_date,
+                    end_date=exp.end_date
+                )   
+                db.add(experience)     
+            skills = SkillsModel(
+                applicant_id=applicant.id,
+                skills=doc.skills
+                ) 
+            db.add(skills)           
             applicant.resume = True
             db.commit()
         except Exception as e:
@@ -147,6 +147,82 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
             raise HTTPException(status_code=500, detail="Internal Server Error")
         return JSONResponse(content={'message': "PDF file uploaded and parsed successfully."}, status_code=201)
     raise HTTPException(status_code=403, detail="User does not have access to this route.")
+
+@router.put("/upload_resume")
+async def update_resume(file: UploadFile, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role == "applicant":    
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+        if file.content_type != "application/pdf":
+            return HTTPException(status_code=400, detail="Only PDF files are allowed.")
+        file_bytes = await file.read()
+        de_obj = ResumeParser(io.BytesIO(file_bytes))
+        linkedin_link, github_link, leetcode_link, codechef_link, codeforces_link = de_obj.get_profile_links()        
+        from utils import scrape, data_cleaning
+        codingData = scrape((None, codeforces_link, codechef_link, leetcode_link))
+        if len(codingData) > 0:
+            cleaned_data = data_cleaning().clean_data(codingData)
+            print(cleaned_data)
+        doc = de_obj.parse_resume()    
+        cand_details = doc.details
+        try:
+            links_data = db.query(LinksModel).filter_by(applicant_id=applicant.id).first()
+            db.delete(links_data)
+            education_data = db.query(EducationModel).filter_by(applicant_id=applicant.id).all()
+            for ed in education_data:
+                db.delete(ed)
+            exp_data = db.query(ExperienceModel).filter_by(applicant_id=applicant.id).all()
+            for exp in exp_data:
+                db.delete(exp)
+            skills_data = db.query(SkillsModel).filter_by(applicant_id=applicant.id).all()
+            db.delete(skills_data)
+        except:
+            db.rollback()
+            logging.exception("Exception Occured")
+            raise HTTPException(status_code=500, detail="Internal Server Error")        
+        try:
+            link = LinksModel(
+                applicant_id=applicant.id,
+                linkedin_link = linkedin_link,
+                github_link = github_link,
+                leetcode_link = leetcode_link,
+                codechef_link = codechef_link,
+                codeforces_link = codeforces_link
+                )
+            db.add(link)
+            for ed in doc.education:
+                education = EducationModel(
+                    applicant_id=applicant.id,
+                    name=ed.name,
+                    stream=ed.stream,
+                    score=ed.score,
+                    location=ed.location,
+                    graduation_year=ed.graduation_year
+                )
+                db.add(education)
+            for exp in doc.experience:
+                experience = ExperienceModel(
+                    applicant_id=applicant.id,
+                    company_name=exp.company_name,
+                    role=exp.role,
+                    role_desc=exp.role_desc,
+                    start_date=exp.start_date,
+                    end_date=exp.end_date
+                )   
+                db.add(experience)     
+            skills = SkillsModel(
+                applicant_id=applicant.id,
+                skills=doc.skills
+                )
+            db.add(skills)
+            applicant.resume = True
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logging.exception("Exception Occurred")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+        return JSONResponse(content={'message': "PDF file uploaded and parsed successfully."}, status_code=201)
+    raise HTTPException(status_code=403, detail="User does not have access to this route.")
+
 
 @router.get("/details")
 async def get_details(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):    
