@@ -76,15 +76,23 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
                 if not job_fit_question:
                     is_passed = False
                     break
-            report = ReportsModel(
-                job_fit_score=is_passed,
-                job_id=job_id,
-                applicant_id=applicant.id
-            )
+            if is_passed:
+                report = ReportsModel(
+                    job_fit_score=is_passed,
+                    job_id=job_id,
+                    applicant_id=applicant.id
+                )
+            else:
+                report = ReportsModel(
+                    job_fit_score=is_passed,
+                    status="Rejected",
+                    job_id=job_id,
+                    applicant_id=applicant.id
+                )
             applicant_job.job_fit = True            
             db.add(report)
             db.commit()
-            return Response(status_code=200)
+            return JSONResponse(status_code=200, content={"is_passed": is_passed})
         except Exception as e:
             db.rollback()
             logging.exception("Exception occurred")
