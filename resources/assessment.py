@@ -26,7 +26,12 @@ async def assessment(job_id: str, current_user: str = Depends(get_current_user),
         applicant_job = applicant_job.as_dict()
         del applicant_job["id"]
         del applicant_job["applicant_id"]
-        del applicant_job["report_id"]        
+        del applicant_job["report_id"]    
+        report = db.query(ReportsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
+        if report:
+            applicant_job["job_fit_passed"] =  report.job_fit_score
+        else:
+            applicant_job["job_fit_passed"] =  False
         return JSONResponse(content={'data': applicant_job})
     raise HTTPException(status_code=403)
 
@@ -67,9 +72,7 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
             applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             if not applicant_job:
                 return RedirectResponse(url=f"/job/{job_id}/apply")            
-            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()
-            if report:
-                return Response(status_code=400, content="Already Completed")
+            report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
             is_passed = True
             for answer in data.answers:
                 job_fit_question = db.query(JobFitQuestionModel).filter_by(id=answer.id, answer=answer.answer_index).first()
@@ -77,18 +80,11 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
                     is_passed = False
                     break
             if is_passed:
-                report = ReportsModel(
-                    job_fit_score=is_passed,
-                    job_id=job_id,
-                    applicant_id=applicant.id
-                )
+                report.job_fit_score=is_passed
             else:
-                report = ReportsModel(
-                    job_fit_score=is_passed,
-                    status="Rejected",
-                    job_id=job_id,
-                    applicant_id=applicant.id
-                )
+                report.job_fit_score=is_passed                                
+                report.status="Rejected"                    
+                applicant_job.completed = True
             applicant_job.job_fit = True            
             db.add(report)
             db.commit()

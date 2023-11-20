@@ -186,12 +186,19 @@ async def post_apply_job(job_id: str, current_user: str = Depends(get_current_us
             raise HTTPException(status_code=409, detail="Already Applied")
         if not applicant.resume:
             raise HTTPException(status_code=404, detail="Resume Not Found")
-        applicant_job = ApplicantJobsModel(
-            applicant_id=applicant.id,
-            job_id=job_id,
-            resume=applicant.resume,
-        )
         try:
+            report_model = ReportsModel(
+                job_id=job_id,
+                applicant_id=applicant.id
+            )
+            db.add(report_model)
+            db.flush()
+            applicant_job = ApplicantJobsModel(
+                applicant_id=applicant.id,
+                job_id=job_id,
+                report_id=report_model.id,
+                resume=applicant.resume,
+            )
             db.add(applicant_job)
             db.commit()
         except Exception as e:
