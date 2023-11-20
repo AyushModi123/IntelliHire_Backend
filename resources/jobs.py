@@ -169,9 +169,9 @@ async def get_apply_job(job_id: str, current_user: str = Depends(get_current_use
         if not applicant_job:
             return JSONResponse(content={"data": {"resume": applicant.resume, "job_title": job.title, "job_description": job.description}})
         if applicant_job.completed:
-            return RedirectResponse(url=f"/job/{job_id}/result")
+            return JSONResponse(content={"redirect_url": f"/job/{job_id}/result"}, status_code=307)
         else:
-            return RedirectResponse(url=f"/job/{job_id}/assessment")
+            return JSONResponse(content={"redirect_url": f"/job/{job_id}/assessment"}, status_code=307)        
     return Response(status_code=403)
 
 @router.post('/job/{job_id}/apply')
@@ -220,10 +220,10 @@ async def job_result(job_id: str, current_user: str = Depends(get_current_user),
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()#When Applicant completes application, it should get saved in applicants table
         applicant_job = db.query(ApplicantJobsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()        
         if not applicant_job:                        
-            return RedirectResponse(url=f"/job/{job_id}/apply")
+            return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)
         else:
             if not applicant_job.completed:
-                return RedirectResponse(url=f"/job/{job_id}/assessment")
+                return JSONResponse(content={"redirect_url": f"/job/{job_id}/assessment"}, status_code=307)
             report = db.query(ReportsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()
             jds.append({"id": job.id, "description": job.description, "title": job.title, 'job_status': job.status, "candidate_status": report.status, "score": report.score})
             return JSONResponse(content={'data':jds}, status_code=200)
