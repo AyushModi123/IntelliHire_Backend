@@ -167,7 +167,7 @@ async def get_apply_job(job_id: str, current_user: str = Depends(get_current_use
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
         applicant_job = db.query(ApplicantJobsModel).filter_by(applicant_id=applicant.id, job_id=job_id).first()        
         if not applicant_job:
-            return JSONResponse(content={"data": {"resume": True, "job_title": job.title, "job_description": job.description}})
+            return JSONResponse(content={"data": {"resume": applicant.resume, "job_title": job.title, "job_description": job.description}})
         if applicant_job.completed:
             return RedirectResponse(url=f"/job/{job_id}/result")
         else:
