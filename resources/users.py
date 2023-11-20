@@ -166,15 +166,17 @@ async def update_resume(file: UploadFile, current_user: str = Depends(get_curren
         cand_details = doc.details
         try:
             links_data = db.query(LinksModel).filter_by(applicant_id=applicant.id).first()
-            db.delete(links_data)
+            if links_data:
+                db.delete(links_data)
             education_data = db.query(EducationModel).filter_by(applicant_id=applicant.id).all()
-            for ed in education_data:
+            for ed in education_data:                
                 db.delete(ed)
             exp_data = db.query(ExperienceModel).filter_by(applicant_id=applicant.id).all()
             for exp in exp_data:
                 db.delete(exp)
-            skills_data = db.query(SkillsModel).filter_by(applicant_id=applicant.id).all()
-            db.delete(skills_data)
+            skills_data = db.query(SkillsModel).filter_by(applicant_id=applicant.id).first()
+            if skills_data:
+                db.delete(skills_data)
         except:
             db.rollback()
             logging.exception("Exception Occured")
@@ -236,12 +238,14 @@ async def get_details(current_user: str = Depends(get_current_user), db: Session
         }        
         return JSONResponse(content={"data": employer_details})
     if current_user.role == "applicant":
-        # applicant_details = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first().as_dict()
+        applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()
+        if applicant.resume:
+            links_data = db.query(LinksModel).filter_by(applicant_id=applicant.id).first().to_dict()
         applicant_details = {
             "name": current_user.name,
             "email": current_user.email,
             "mob_no": current_user.mob_no,
             "location": current_user.location            
         }
-        return JSONResponse(content={"data": applicant_details})
+        return JSONResponse(content={"data": applicant_details | links_data})
     raise HTTPException(status_code=403)
