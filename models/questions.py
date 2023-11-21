@@ -18,7 +18,7 @@ class JobFitQuestionModel(Base):
         return {
             'id': self.id,
             'question': self.question,
-            'choices': self.choices.split(';;;') if self.choices else [],
+            'choices': self.choices.split(';;;')[:-1] if self.choices else [],
             'answer': self.answer,            
         }
 

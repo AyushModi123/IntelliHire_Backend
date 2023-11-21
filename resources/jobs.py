@@ -23,29 +23,33 @@ async def post_job(job_data: JobDetailsSchema, current_user: str = Depends(get_c
                 weights=data.get("weights"),
                 title=data.get("title"),
                 status=data.get("status"),
+                is_job_fit=data.get("is_job_fit"),
+                is_aptitude=data.get("is_aptitude"),
+                is_skill=data.get("is_skill"),
                 aptitude_difficulty=data.get("aptitude_difficulty"),
                 skill_difficulty=data.get("skill_difficulty"),
                 employer_id=current_user.id
             )
             db.add(job_model)
             db.flush()  
-            for question in data.get("quiz_questions"):
-                current_question = question.get("question")
-                options = question.get("quiz_question_options")
-                current_options = ""
-                answer_index = 0
-                for i, option in enumerate(options):
-                    current_options+=option.get("option")
-                    current_options+=";;;"
-                    if option.get("answer"):
-                        answer_index = i
-                question_model = JobFitQuestionModel(
-                            question=current_question,
-                            choices=current_options,
-                            answer=answer_index,
-                            job_id=job_model.id
-                        )
-                db.add(question_model)
+            if data.get("is_job_fit"):              
+                for question in data.get("quiz_questions"):
+                    current_question = question.get("question")
+                    options = question.get("quiz_question_options")
+                    current_options = ""
+                    answer_index = 0
+                    for i, option in enumerate(options):
+                        current_options+=option.get("option")
+                        current_options+=";;;"
+                        if option.get("answer"):
+                            answer_index = i
+                    question_model = JobFitQuestionModel(
+                                question=current_question,
+                                choices=current_options,
+                                answer=answer_index,
+                                job_id=job_model.id
+                            )
+                    db.add(question_model)
             db.commit()
         except Exception as e:
             db.rollback()
