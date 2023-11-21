@@ -56,7 +56,7 @@ job_fit_prompt = PromptTemplate(
     input_variables=["job_description", "company_desc", "exclude_ques"],
     template='''Based on the given job_description: {job_description}
     ; company_description: {company_desc}.
-    Generate 3 basic fit questions that an interviewer might ask candidates.
+    Generate 3 basic fit questions with single correct option that an interviewer might ask candidates.
     These questions should focus on assessing the candidate's qualifications, experience, and educational background. Include questions similar to 'How many years of experience do you have?' and 'Do you have a [specific degree]?' to help evaluate the candidate's fitness for the role.
     Exclude these questions: {exclude_ques}'''
 )

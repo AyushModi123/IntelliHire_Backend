@@ -37,5 +37,5 @@ class AptitudeQuestionModel(Base):
             'question': self.question,
             'choices': self.choices.split(';;;') if self.choices else [],
             'answer': self.answer,
-            'difficulty': self.difficulty.value if self.difficulty else None
+            'difficulty': self.difficulty if self.difficulty else None
         }
