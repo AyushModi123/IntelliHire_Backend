@@ -62,7 +62,8 @@ class ApplicantJobsModel(Base):
             'resume': cls.resume,
             'job_fit': cls.job_fit,
             'aptitude': cls.aptitude,
-            'skill': cls.skill
+            'skill': cls.skill,
+            'is_completed': cls.completed
         }
 
 class EmployersModel(Base):
