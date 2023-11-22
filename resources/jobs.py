@@ -109,7 +109,7 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user), db
         del job["employer_id"]
         return JSONResponse(content={'data':job}, status_code=200)
     elif current_user.role == "employer":
-        return RedirectResponse(url=f"/job/{job_id}/apply", status_code=308)
+        return RedirectResponse(url=f"/job/{job_id}", status_code=308)
     raise HTTPException(status_code=403)
 
 @router.delete('/job/{job_id}')
@@ -229,7 +229,7 @@ async def job_result(job_id: str, current_user: str = Depends(get_current_user),
         applicant = db.query(ApplicantsModel).filter_by(user_id=current_user.id).first()#When Applicant completes application, it should get saved in applicants table
         applicant_job = db.query(ApplicantJobsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()        
         if not applicant_job:                        
-            return JSONResponse(content={"redirect_url": f"/job/{job_id}/apply"}, status_code=307)
+            return JSONResponse(content={"redirect_url": f"/job/{job_id}"}, status_code=307)
         else:
             if not applicant_job.completed:
                 return JSONResponse(content={"redirect_url": f"/job/{job_id}/assessment"}, status_code=307)
