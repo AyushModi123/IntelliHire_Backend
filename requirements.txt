@@ -21,3 +21,4 @@ langchain==0.0.281
 waitress==2.1.2
 selenium==4.14.0
 bs4==0.0.1
+mysqlclient
