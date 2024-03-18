@@ -8,3 +8,6 @@ Others
 keys.py
 app_.py
 gunicorn_config.py
+*vagrant*
+Vagrantfile
+test.ipynb
