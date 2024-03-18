@@ -1,6 +1,6 @@
 from langchain import PromptTemplate
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 from pydantic import BaseModel, Field
 
 class CandidateDetailsSchema(BaseModel):
@@ -41,3 +41,35 @@ parse_resume_prompt = PromptTemplate(
     template='''You are a world class algorithm for extracting information in structured formats. Use the given format to extract information from the following input: {resume_text}. 
           Tip: Make sure to answer in the correct format. Return value of fields as None if value not found.'''
 )
+
+job_description_prompt = PromptTemplate(
+    input_variables=["job_title", "domain", "tone", "company_name"],
+    template='''Generate a comprehensive job description for a {job_title} in the {domain} domain at company {company_name}. The tone should be {tone}, 
+        and the description should include key responsibilities, qualifications, and any specific attributes or skills desired. Ensure that the language is engaging and tailored to attract suitable candidates.'''
+)
+
+class JobDescriptionPromptsSchema(BaseModel):
+    """Generate Job Description"""
+    content: str = Field(..., description="Job Description")
+
+job_fit_prompt = PromptTemplate(
+    input_variables=["job_description", "company_desc", "exclude_ques"],
+    template='''Based on the given job_description: {job_description}
+    ; company_description: {company_desc}.
+    Generate 3 basic fit questions with single correct option that an interviewer might ask candidates.
+    These questions should focus on assessing the candidate's qualifications, experience, and educational background. Include questions similar to 'How many years of experience do you have?' and 'Do you have a [specific degree]?' to help evaluate the candidate's fitness for the role.
+    Exclude these questions: {exclude_ques}'''
+)
+
+class JobFitOptionsPromptsSchema(BaseModel):
+    id: int = Field(..., description="Option number")
+    option: str = Field(..., description="Option Text")
+    answer: bool = Field(..., description="Correct/Incorrect")
+
+class JobFitQuestionPromptsSchema(BaseModel):
+    question: str = Field(..., description="Question")
+    quiz_question_options: List[JobFitOptionsPromptsSchema]
+
+class JobFitQuestionsPromptsSchema(BaseModel):
+    """Generate Job Fit Questions"""
+    quiz_questions: List[JobFitQuestionPromptsSchema]

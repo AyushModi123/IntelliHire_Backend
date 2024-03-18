@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Annotated
 from fastapi import APIRouter
-from db import db
+from db import get_db, Session
 from models.users import UsersModel
 import bcrypt
 from fastapi.responses import JSONResponse
@@ -30,7 +30,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -44,7 +44,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 @router.post("/token")
-async def auth(user_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def auth(user_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
     email = user_data.username
     password = user_data.password    
     user = db.query(UsersModel).filter_by(email=email).first()
