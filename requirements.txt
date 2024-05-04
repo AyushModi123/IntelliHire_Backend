@@ -22,3 +22,6 @@ selenium==4.14.0
 bs4==0.0.1
 alembic==1.12.1
 gunicorn
+spacy==3.7.4
+scikit-learn==1.4.2
+# python -m spacy download en_core_web_sm

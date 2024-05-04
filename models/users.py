@@ -33,11 +33,13 @@ class ApplicantsModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)      
     user_id = Column(Integer, ForeignKey('users.id'))
     resume = Column(Boolean, default=False)
+    resume_text = Column(String(5000))
 
     def as_dict(cls):
         return {
             "id": cls.id,
-            "user_id": cls.user_id            
+            "user_id": cls.user_id,    
+            "resume_text": cls.resume_text        
         }
     
 class ApplicantJobsModel(Base):
@@ -46,7 +48,7 @@ class ApplicantJobsModel(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     applicant_id = Column(Integer, ForeignKey('applicants.id'))
     job_id = Column(String(36), ForeignKey('jobs.id'))    
-    report_id = Column(Integer, ForeignKey('reports.id'))
+    report_id = Column(Integer, ForeignKey('reports.id'))    
     resume = Column(Boolean, default=False)
     job_fit = Column(Boolean, default=False)
     aptitude = Column(Boolean, default=False)

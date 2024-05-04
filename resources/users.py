@@ -84,7 +84,7 @@ async def login(user_data: UserLoginSchema, db: Session = Depends(get_db)):
         password_val = user.password
         role = user.role  
         name = user.name
-        if bcrypt.checkpw(password.encode('utf-8'), password_val.encode('utf-8')):
+        if bcrypt.checkpw(bytes(password, encoding="UTF-8"), bytes(password_val)):
             access_token = create_access_token({"sub": email_val})
             return JSONResponse(content={'access_token': access_token, 'name': name, 'role': role}, status_code=200)    
     raise HTTPException(status_code=401, detail="Email or Password do not match.")
@@ -96,7 +96,9 @@ async def upload_resume(file: UploadFile, current_user: str = Depends(get_curren
         if file.content_type != "application/pdf":
             return HTTPException(status_code=400, detail="Only PDF files are allowed.")
         file_bytes = await file.read()
-        de_obj = ResumeParser(io.BytesIO(file_bytes))
+        de_obj = ResumeParser(io.BytesIO(file_bytes))        
+        applicant.resume_text = de_obj.context
+        db.flush()
         linkedin_link, github_link, leetcode_link, codechef_link, codeforces_link = de_obj.get_profile_links()        
         from utils import scrape, data_cleaning
         codingData = scrape((None, codeforces_link, codechef_link, leetcode_link))
@@ -156,6 +158,8 @@ async def update_resume(file: UploadFile, current_user: str = Depends(get_curren
             return HTTPException(status_code=400, detail="Only PDF files are allowed.")
         file_bytes = await file.read()
         de_obj = ResumeParser(io.BytesIO(file_bytes))
+        applicant.resume_text = de_obj.context       
+        db.flush()         
         linkedin_link, github_link, leetcode_link, codechef_link, codeforces_link = de_obj.get_profile_links()        
         from utils import scrape, data_cleaning
         codingData = scrape((None, codeforces_link, codechef_link, leetcode_link))

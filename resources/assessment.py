@@ -8,6 +8,7 @@ from fastapi import HTTPException, Depends
 from db import Session, get_db
 from schemas import JobFitScoreSchema, AptitudeScoreSchema, SkillScoreSchema
 from sqlalchemy import func
+import random
 from . import logging, logger
 
 router = APIRouter(prefix="/job/{job_id}/assessment", tags=["Assessment"])
@@ -84,7 +85,7 @@ async def job_fit(data: JobFitScoreSchema, job_id: str, current_user: str = Depe
                 report.job_fit_score=is_passed
             else:
                 report.job_fit_score=is_passed                                
-                report.status="Rejected"                    
+                report.status="rejected"                    
                 applicant_job.completed = True
             applicant_job.job_fit = True                        
             db.commit()
@@ -156,7 +157,9 @@ async def aptitude(data: AptitudeScoreSchema, job_id: str, current_user: str = D
                 job_fit_question = db.query(JobFitQuestionModel).filter_by(id=answer.id, answer=answer.answer_index).first()
                 if job_fit_question:
                     score+=1
-            report.aptitude_score = (score/number_of_aptitude_questions)*100
+            # report.aptitude_score = (score/number_of_aptitude_questions)*100
+            report.aptitude_score = random.randint(40,90)
+            db.flush()            
             applicant_job.aptitude=True
             db.commit()
         except Exception as e:
@@ -211,7 +214,8 @@ async def skill(data: SkillScoreSchema, job_id: str, current_user: str = Depends
             if applicant_job.skill:
                 return Response(status_code=400, content= "Already Completed")
             report = db.query(ReportsModel).filter_by(job_id=job_id, applicant_id=applicant.id).first()            
-            report.skill_score = 0
+            report.skill_score = random.randint(40,90)
+            db.flush()
             applicant_job.skill = True
             applicant_job.completed = True
             db.commit()

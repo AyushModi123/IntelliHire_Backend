@@ -8,6 +8,7 @@ from db import get_db, Session
 from models.jobs import JobsModel
 from models.users import UsersModel, ApplicantsModel, EmployersModel, ReportsModel, ApplicantJobsModel
 from models.questions import JobFitQuestionModel, AptitudeQuestionModel
+from utils import ranker
 from . import logging, logger
 
 router = APIRouter(tags=["Jobs/Create-Job"])
@@ -92,17 +93,19 @@ async def get_job(job_id: str, current_user: str = Depends(get_current_user), db
         if not job or job.status == 'inactive':
             raise HTTPException(status_code=404, detail="Invalid Job ID")  
         job_applicants = []
-        # To be implemented
-        rank_counter = 1
+        # To be implemented                
+        job_description = job.description
         for applicant_job in db.query(ApplicantJobsModel).filter_by(job_id=job.id).all():            
             applicant = db.query(ApplicantsModel).filter_by(id=applicant_job.applicant_id).first()
             user_details = db.query(UsersModel).filter_by(id=applicant.user_id).first()
+            report = db.query(ReportsModel).filter_by(id=applicant_job.report_id).first()
             applicant = applicant.as_dict()
             del applicant["user_id"]
-            applicant["rank"] = rank_counter
+            resume_text = applicant["resume_text"]
+            score = ranker.score_resume(resume_text, job_description)            
+            applicant["score"] = round((score + report.aptitude_score + report.skill_score)/3, 2)
             applicant["name"] = user_details.name
-            applicant["email"] = user_details.email
-            rank_counter+=1
+            applicant["email"] = user_details.email            
             job_applicants.append(applicant)
         job = job.as_dict()
         job['applicants'] = job_applicants   
