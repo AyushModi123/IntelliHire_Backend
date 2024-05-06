@@ -84,7 +84,7 @@ async def login(user_data: UserLoginSchema, db: Session = Depends(get_db)):
         password_val = user.password
         role = user.role  
         name = user.name
-        if bcrypt.checkpw(bytes(password, encoding="UTF-8"), bytes(password_val)):
+        if bcrypt.checkpw(bytes(password, encoding="UTF-8"), bytes(password_val, encoding="UTF-8")):
             access_token = create_access_token({"sub": email_val})
             return JSONResponse(content={'access_token': access_token, 'name': name, 'role': role}, status_code=200)    
     raise HTTPException(status_code=401, detail="Email or Password do not match.")
